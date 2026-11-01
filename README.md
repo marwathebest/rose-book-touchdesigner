@@ -2,7 +2,7 @@
 
 **A TouchDesigner book you control with your hand. Twist your wrist in front of the camera and a page turns, and a rose grows out of it.**
 
-**كتاب تفاعلي في TouchDesigner ينفتح بلفّة اليد. تلفّين كفّك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.**
+**كتاب تفاعلي في TouchDesigner ينفتح بلفّة اليد. تلفّ كفّك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.**
 
 ![Rose Book preview](docs/preview.jpg)
 
@@ -11,7 +11,7 @@
 - اللفّة الأولى تفتح الغلاف، وكل لفّة بعدها تقلب صفحة.
 - كل صفحة فيها وردة مختلفة: حمرا، وردية، وردتين فوشيا، وثلاث ورود بيضاء.
 - الغصن ينمو والأوراق تطلع، وبعدها الوردة تتفتّح من برعم لين تكتمل، وحولها جزيئات ضوء.
-- تلفّين بالعكس فترجع صفحة. وبعد الصفحة الرابعة يتقفّل الكتاب.
+- اللفّة بالعكس ترجّع صفحة. وبعد الصفحة الرابعة يتقفّل الكتاب.
 
 The wrist rotation is read from MediaPipe hand tracking. A "door-knob twist" gesture proved much more reliable than flipping the palm.
 
@@ -32,12 +32,12 @@ The wrist rotation is read from MediaPipe hand tracking. A "door-knob twist" ges
 
 ## التشغيل | Run it
 
-1. افتحي مشروع [mediapipe-touchdesigner](https://github.com/torinmb/mediapipe-touchdesigner) وتأكدي إن `hand_tracking` شغّال.
-2. عدّلي `ROSE_FOLDER` في `book_body.py` و`_DIR` في `build_rose_book.py` لمسار هذا المجلد عندك.
-3. في `/project1` أضيفي **Text DAT** باسم `rose_book_builder`، واربطيه بملف `build_rose_book.py`، واضغطي **Ctrl+R**.
+1. افتح مشروع [mediapipe-touchdesigner](https://github.com/torinmb/mediapipe-touchdesigner) وتأكد إن `hand_tracking` شغّال.
+2. عدّل `ROSE_FOLDER` في `book_body.py` و`_DIR` في `build_rose_book.py` لمسار هذا المجلد عندك.
+3. في `/project1` أضف **Text DAT** باسم `rose_book_builder`، واربطه بملف `build_rose_book.py`، واضغط **Ctrl+R**.
 4. الناتج النهائي في `rose_book/final`.
 
-**للتجربة بدون كاميرا:** شغّلي *Test Without Camera* من صفحة **Book** في باراميترات `rose_book`، وحرّكي *Test Hand Roll* من 1 إلى ‎-1. لا تضغطين Space لأنه يوقف التايملاين.
+**للتجربة بدون كاميرا:** شغّل *Test Without Camera* من صفحة **Book** في باراميترات `rose_book`، وحرّك *Test Hand Roll* من 1 إلى ‎-1. لا تضغط Space لأنه يوقف التايملاين.
 
 ---
 
