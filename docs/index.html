@@ -11,7 +11,7 @@
 <script>
   (function () {
     var l = null; try { l = localStorage.getItem('rb-lang'); } catch (e) {}
-    if (l === 'ar') { document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl'; }
+    if (l !== 'en') { document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl'; }
     document.documentElement.classList.add('js');
   })();
 </script>
@@ -165,6 +165,15 @@
   .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); transition: background .3s ease; }
   .dots i.on { background: var(--rose); }
   .hint { margin-top: 12px; color: var(--ink-3); text-align: center; }
+  .camera-panel { max-width: 860px; margin: 18px auto 0; display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 14px; align-items: center; text-align: start; }
+  .camera-view { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 14px; border: 1px solid var(--rule); background: #090507; }
+  .camera-view video, .camera-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  .camera-view canvas { pointer-events: none; }
+  .camera-copy { color: var(--ink-2); font-size: 15px; }
+  .camera-copy strong { color: var(--ink); display: block; font-size: 17px; margin-bottom: 4px; }
+  .camera-status { color: var(--rose); margin-top: 7px; min-height: 1.6em; }
+  .camera-panel[hidden] { display: none; }
+  @media (max-width: 620px) { .camera-panel { grid-template-columns: 1fr; } .camera-view { max-width: 320px; width: 100%; margin: auto; } }
 
   /* sections */
   section { padding-block: clamp(56px, 8vw, 100px); border-top: 1px solid var(--rule); }
@@ -258,8 +267,13 @@
       <button class="btn" id="prev" type="button" aria-label="Previous page"><span class="arr">←</span></button>
       <div class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <button class="btn solid" id="next" type="button"><span id="nextLbl" data-i18n="ctl.open">Open the book</span> <span class="arr">→</span></button>
+      <button class="btn" id="cameraBtn" type="button" data-i18n="ctl.camera">Use my camera</button>
     </div>
     <p class="hint mono" data-i18n="ctl.hint">In the browser: click, swipe, or use the arrow keys. In TouchDesigner: your hand.</p>
+    <div class="camera-panel" id="cameraPanel" hidden>
+      <div class="camera-view"><video id="cameraVideo" playsinline muted></video><canvas id="handCanvas"></canvas></div>
+      <div class="camera-copy"><strong data-i18n="cam.title">Move your hand sideways</strong><span data-i18n="cam.help">Swipe across the camera to turn the page. Everything runs in your browser; the video is not uploaded.</span><div class="camera-status mono" id="cameraStatus" aria-live="polite"></div></div>
+    </div>
   </div>
 
   <section id="how">
@@ -332,8 +346,9 @@
     'hero.eyebrow': 'TouchDesigner · MediaPipe · Python',
     'hero.title': 'كتاب <em>الورود</em>',
     'hero.lede': 'كتاب تقلّب صفحاته بيدك. تحرّك يدك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.',
-    'ctl.open': 'افتح الكتاب', 'ctl.next': 'الصفحة التالية', 'ctl.close': 'سكّر الكتاب',
+    'ctl.open': 'افتح الكتاب', 'ctl.next': 'الصفحة التالية', 'ctl.close': 'سكّر الكتاب', 'ctl.camera': 'شغّل الكاميرا',
     'ctl.hint': 'في المتصفح: اضغط أو اسحب أو استخدم الأسهم. وفي TouchDesigner: بيدك.',
+    'cam.title': 'حرّك يدك يمين ويسار', 'cam.help': 'مرّر يدك أمام الكاميرا لتقليب الصفحة. كل المعالجة تصير داخل متصفحك، والفيديو ما ينرفع لأي مكان.',
     'how.title': 'كيف <em>يشتغل</em>',
     'how.sub': 'كل شي يشتغل مباشرة داخل مشروع TouchDesigner واحد، بدون إنترنت، على لابتوب عادي مع كاميرا.',
     'how.1t': 'يدك', 'how.1p': 'تتبّع اليد في MediaPipe يقرأ معصمك وأصابعك من الكاميرا عشرات المرات في الثانية.',
@@ -458,6 +473,7 @@
       setTimeout(function () { leaf.classList.remove('turn', 'back-turn'); busy = false; }, reduce ? 0 : 450);
     }, reduce ? 0 : (pageTurn ? 450 : 500));
   }
+  window.roseBookGo = go;
   next.addEventListener('click', function () { go(1); });
   prev.addEventListener('click', function () { go(-1); });
   book.addEventListener('click', function () { go(1); });
@@ -501,6 +517,82 @@
 
   if (root.lang === 'ar') setLang('ar'); else render();
 })();
+</script>
+<script type="module">
+  import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
+
+  const button = document.getElementById('cameraBtn');
+  const panel = document.getElementById('cameraPanel');
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('handCanvas');
+  const ctx = canvas.getContext('2d');
+  const status = document.getElementById('cameraStatus');
+  let landmarker, stream, running = false, lastVideoTime = -1, samples = [], cooldownUntil = 0;
+
+  const words = () => document.documentElement.lang === 'ar' ? {
+    loading: 'جاري تجهيز تتبّع اليد…', ready: 'الكاميرا جاهزة — لوّح بيدك', noHand: 'قرّب يدك من الكاميرا', stop: 'أوقف الكاميرا', start: 'شغّل الكاميرا', denied: 'تعذّر تشغيل الكاميرا. تأكد من السماح لها في المتصفح.'
+  } : {
+    loading: 'Preparing hand tracking…', ready: 'Camera ready — wave your hand', noHand: 'Bring your hand into view', stop: 'Stop camera', start: 'Use my camera', denied: 'Could not start the camera. Check the browser camera permission.'
+  };
+
+  async function prepare() {
+    if (landmarker) return;
+    const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    landmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
+      runningMode: 'VIDEO', numHands: 1, minHandDetectionConfidence: .55, minTrackingConfidence: .55
+    });
+  }
+
+  function drawHand(points) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!points) return;
+    ctx.fillStyle = '#ec6f9b'; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2;
+    for (const p of points) { ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, Math.PI * 2); ctx.fill(); }
+    const links = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+    for (const [a,b] of links) { ctx.beginPath(); ctx.moveTo(points[a].x*canvas.width,points[a].y*canvas.height); ctx.lineTo(points[b].x*canvas.width,points[b].y*canvas.height); ctx.stroke(); }
+  }
+
+  function detectSwipe(x, now) {
+    samples.push({ x, t: now }); samples = samples.filter(s => now - s.t < 650);
+    if (now < cooldownUntil || samples.length < 4) return;
+    const dx = x - samples[0].x;
+    if (Math.abs(dx) > .24) { window.roseBookGo(dx < 0 ? -1 : 1); cooldownUntil = now + 1250; samples = []; }
+  }
+
+  function loop() {
+    if (!running) return;
+    if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+      lastVideoTime = video.currentTime;
+      const result = landmarker.detectForVideo(video, performance.now());
+      const hand = result.landmarks && result.landmarks[0];
+      drawHand(hand);
+      if (hand) { status.textContent = words().ready; detectSwipe(hand[0].x, performance.now()); }
+      else { status.textContent = words().noHand; samples = []; }
+    }
+    requestAnimationFrame(loop);
+  }
+
+  async function start() {
+    panel.hidden = false; status.textContent = words().loading; button.disabled = true;
+    try {
+      await prepare();
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+      video.srcObject = stream; await video.play();
+      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+      running = true; button.disabled = false; button.textContent = words().stop; status.textContent = words().ready; loop();
+    } catch (error) {
+      console.error(error); button.disabled = false; button.textContent = words().start; status.textContent = words().denied;
+    }
+  }
+
+  function stop() {
+    running = false; if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null; video.srcObject = null; ctx.clearRect(0,0,canvas.width,canvas.height);
+    panel.hidden = true; button.textContent = words().start;
+  }
+
+  button.addEventListener('click', () => running ? stop() : start());
 </script>
 </body>
 </html>
