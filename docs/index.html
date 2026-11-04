@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rose Book: a TouchDesigner book you turn with your hand</title>
+<meta name="description" content="An interactive TouchDesigner book. Move your hand in front of the camera, a page turns, and a rose grows out of it. Free to download." />
+<meta property="og:title" content="Rose Book · كتاب الورود" />
+<meta property="og:description" content="A TouchDesigner book you turn with your hand. Every page grows a rose." />
+<meta property="og:image" content="preview.jpg" />
+<script>
+  (function () {
+    var l = null; try { l = localStorage.getItem('rb-lang'); } catch (e) {}
+    if (l === 'ar') { document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl'; }
+    document.documentElement.classList.add('js');
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --night: #0e080b;
+    --night-2: #1a0f14;
+    --ink: #f7ece8;
+    --ink-2: #d7c3be;
+    --ink-3: #9a8580;
+    --rule: rgba(247, 236, 232, .12);
+    --rose: #ec6f9b;
+    --rose-deep: #8e1027;
+    --page: #ecc0b6;
+    --page-2: #e3aea4;
+    --f-display: 'Fraunces', Georgia, serif;
+    --f-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --gutter: clamp(16px, 4vw, 48px);
+  }
+  :lang(ar) { --f-display: 'Amiri', serif; --f-body: 'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    background: var(--night); color: var(--ink);
+    font-family: var(--f-body); font-size: 17px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  :lang(ar) body { font-size: 18px; line-height: 1.85; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-inline: var(--gutter); }
+  .mono { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  :lang(ar) .mono:not(.keep) { font-family: var(--f-body); letter-spacing: 0; text-transform: none; font-size: 13.5px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+
+  #sparks { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  header, main, footer { position: relative; z-index: 1; }
+
+  /* nav */
+  .nav .wrap { display: flex; align-items: center; gap: 22px; height: 64px; }
+  .brand { font-family: 'Fraunces', serif; font-style: italic; font-size: 21px; text-decoration: none; margin-inline-end: auto; }
+  .brand b { color: var(--rose); font-weight: 400; }
+  .nav a.l { text-decoration: none; color: var(--ink-2); }
+  .nav a.l:hover { color: var(--ink); }
+  .lang {
+    font: inherit; font-size: 14px; cursor: pointer; color: var(--ink);
+    background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 14px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
+  :lang(ar) .lang { font-family: 'IBM Plex Sans', sans-serif; }
+  .lang:hover { border-color: var(--rose); }
+  @media (max-width: 720px) { .nav a.l { display: none; } }
+
+  /* hero */
+  .hero { padding-block: clamp(24px, 5vw, 56px) 40px; text-align: center; }
+  .eyebrow { color: var(--rose); }
+  h1 {
+    font-family: var(--f-display); font-weight: 300;
+    font-size: clamp(44px, 8vw, 96px); line-height: 1; letter-spacing: -.03em;
+    margin-top: 14px; font-variation-settings: 'opsz' 144;
+  }
+  :lang(ar) h1 { letter-spacing: 0; line-height: 1.2; font-weight: 400; }
+  h1 em { font-style: italic; color: var(--rose); }
+  :lang(ar) h1 em { font-style: normal; }
+  .lede { max-width: 34em; margin: 18px auto 0; color: var(--ink-2); font-size: clamp(17px, 2vw, 20px); }
+
+  /* the book */
+  .stage { margin: 36px auto 0; max-width: 860px; perspective: 2200px; }
+  .book {
+    position: relative; aspect-ratio: 16 / 10.6; width: 100%;
+    direction: ltr;
+    transform-style: preserve-3d;
+    user-select: none; -webkit-user-select: none; touch-action: pan-y;
+  }
+  .board {
+    position: absolute; inset: 3% 2%;
+    background: linear-gradient(160deg, #a3162f, var(--rose-deep));
+    border-radius: 6px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.04) inset;
+    transition: opacity .5s ease;
+  }
+  .half {
+    position: absolute; top: 6%; bottom: 6%; width: 46%;
+    background: linear-gradient(180deg, var(--page), var(--page-2));
+    overflow: hidden;
+  }
+  .half.l { left: 4%; border-radius: 3px 0 0 3px; box-shadow: inset -18px 0 30px -18px rgba(90,20,30,.45); }
+  .half.r { right: 4%; border-radius: 0 3px 3px 0; box-shadow: inset 18px 0 30px -18px rgba(90,20,30,.45); }
+  .rose {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    height: 100%; width: auto; max-width: none; pointer-events: none;
+    filter: drop-shadow(0 0 14px rgba(255, 190, 210, .35));
+  }
+  .pagelabel { position: absolute; left: 10%; top: 9%; color: rgba(90, 20, 30, .55); }
+  .pagelabel b { display: block; font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: clamp(18px, 2.6vw, 30px); color: rgba(90, 20, 30, .8); text-transform: none; letter-spacing: 0; margin-top: 4px; }
+  :lang(ar) .pagelabel { left: auto; right: 10%; text-align: right; }
+
+  .cover {
+    position: absolute; top: 3%; bottom: 3%; left: 50%; width: 48%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 1s cubic-bezier(.6,.05,.25,1);
+  }
+  .cover .face, .cover .back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 0 6px 6px 0; }
+  .cover .face {
+    background: linear-gradient(150deg, #b51d3a, #6e0b1e);
+    display: grid; place-items: center; text-align: center;
+    box-shadow: inset 0 0 0 10px rgba(255,255,255,.04), 0 20px 50px -20px #000;
+  }
+  .cover .face span { font-family: 'Fraunces', serif; font-style: italic; font-size: clamp(22px, 4vw, 46px); color: #f9d5dd; line-height: 1.1; }
+  .cover .face small { display: block; font-family: 'Amiri', serif; font-style: normal; font-size: .62em; margin-top: 8px; color: #f3b6c6; }
+  .cover .back { transform: rotateY(180deg); background: linear-gradient(180deg, var(--page), var(--page-2)); border-radius: 6px 0 0 6px; }
+  .book.open .cover { transform: rotateY(-180deg); }
+  .book.closed .board { opacity: .0; }
+  .book.closed .half { opacity: 0; }
+  .book.open .half.l { transform: translateZ(2px); }
+  .half { transition: opacity .5s ease .2s; }
+
+  .leaf {
+    position: absolute; top: 9%; bottom: 9%; left: 50%; width: 46%;
+    transform-origin: left center; transform-style: preserve-3d;
+    pointer-events: none; opacity: 0;
+  }
+  .leaf .face, .leaf .back { position: absolute; inset: 0; backface-visibility: hidden; background: linear-gradient(180deg, var(--page), var(--page-2)); }
+  .leaf .back { transform: rotateY(180deg); }
+  .leaf.turn { opacity: 1; animation: turn .9s cubic-bezier(.55,.05,.3,1) forwards; }
+  .leaf.turn.back-turn { animation-name: turnback; }
+  @keyframes turn { from { transform: rotateY(0); } to { transform: rotateY(-180deg); } }
+  @keyframes turnback { from { transform: rotateY(-180deg); } to { transform: rotateY(0); } }
+
+  .controls { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 22px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font: inherit; font-size: 15px; cursor: pointer; text-decoration: none;
+    padding: 11px 20px; border-radius: 999px; border: 1px solid var(--rule);
+    background: rgba(255,255,255,.03); color: var(--ink);
+    transition: border-color .2s ease, background-color .2s ease;
+  }
+  .btn:hover { border-color: var(--rose); }
+  .btn.solid { background: var(--rose); color: #2a0610; border-color: var(--rose); font-weight: 600; }
+  .btn.solid:hover { background: #f38db1; }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .arr { display: inline-block; }
+  [dir="rtl"] .arr { transform: scaleX(-1); }
+  .dots { display: flex; gap: 8px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); transition: background .3s ease; }
+  .dots i.on { background: var(--rose); }
+  .hint { margin-top: 12px; color: var(--ink-3); text-align: center; }
+
+  /* sections */
+  section { padding-block: clamp(56px, 8vw, 100px); border-top: 1px solid var(--rule); }
+  h2 { font-family: var(--f-display); font-weight: 300; font-size: clamp(32px, 4.4vw, 52px); line-height: 1.05; letter-spacing: -.02em; }
+  :lang(ar) h2 { letter-spacing: 0; line-height: 1.3; font-weight: 400; }
+  h2 em { font-style: italic; color: var(--rose); }
+  :lang(ar) h2 em { font-style: normal; }
+  .sub { color: var(--ink-2); margin-top: 12px; max-width: 40em; }
+
+  .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+  .flow > div { border: 1px solid var(--rule); border-radius: 12px; padding: 20px; background: rgba(255,255,255,.02); }
+  .flow .n { color: var(--rose); }
+  .flow h3 { font-family: var(--f-display); font-weight: 400; font-size: 22px; margin-top: 8px; }
+  .flow p { color: var(--ink-2); font-size: 15.5px; margin-top: 6px; }
+  .shot { margin-top: 28px; border-radius: 12px; overflow: hidden; border: 1px solid var(--rule); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot figcaption { padding: 10px 14px; color: var(--ink-3); }
+  @media (max-width: 760px) { .flow { grid-template-columns: 1fr; } }
+
+  .steps { list-style: none; counter-reset: s; margin-top: 32px; display: grid; gap: 12px; }
+  .steps li {
+    counter-increment: s; position: relative;
+    border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px 16px 62px;
+    background: rgba(255,255,255,.02);
+  }
+  :lang(ar) .steps li { padding: 16px 62px 16px 18px; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 18px; top: 14px;
+    width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--rose); color: #2a0610; font-family: var(--f-mono); font-size: 13px; font-weight: 600;
+  }
+  :lang(ar) .steps li::before { left: auto; right: 18px; }
+  .steps b { font-weight: 600; }
+  .steps p { color: var(--ink-2); font-size: 15.5px; margin-top: 4px; }
+  code, kbd {
+    font-family: var(--f-mono); font-size: .86em;
+    background: rgba(255,255,255,.07); border: 1px solid var(--rule); border-radius: 5px; padding: 1px 6px;
+    direction: ltr; unicode-bidi: isolate; white-space: nowrap;
+  }
+  .ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+  .req { margin-top: 18px; color: var(--ink-3); font-size: 14.5px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 4vw, 48px); align-items: start; }
+  @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+  .note { margin-top: 18px; border-inline-start: 3px solid var(--rose); padding: 10px 16px; color: var(--ink-2); background: rgba(236,111,155,.06); border-radius: 0 8px 8px 0; font-size: 15.5px; }
+  :lang(ar) .note { border-radius: 8px 0 0 8px; }
+
+  footer { border-top: 1px solid var(--rule); padding-block: 28px; color: var(--ink-3); font-size: 14.5px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer a { color: var(--ink-2); }
+
+  .js .rv { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
+  .js .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .js .rv { opacity: 1; transform: none; transition: none; }
+    .cover, .half { transition: none; }
+    .leaf.turn { animation: none; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<canvas id="sparks" aria-hidden="true"></canvas>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">Rose <b>Book</b></a>
+    <a class="l mono" href="#how" data-i18n="nav.how">How it works</a>
+    <a class="l mono" href="#get" data-i18n="nav.get">Get it</a>
+    <a class="l mono" href="#screen" data-i18n="nav.screen">Screen mode</a>
+    <button class="lang" id="langBtn" type="button">عربي</button>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero wrap">
+    <p class="eyebrow mono" data-i18n="hero.eyebrow">TouchDesigner · MediaPipe · Python</p>
+    <h1 data-i18n="hero.title">Rose <em>Book</em></h1>
+    <p class="lede" data-i18n="hero.lede">A book you turn with your hand. Move your hand in front of the camera, a page turns, and a rose grows out of it.</p>
+
+    <div class="stage">
+      <div class="book closed" id="book" role="group" aria-label="Interactive preview of the Rose Book">
+        <div class="board"></div>
+        <div class="half l"><div class="pagelabel mono keep"><span id="pgNum">page 1 / 4</span><b id="pgName">A red rose</b></div></div>
+        <div class="half r"><img class="rose" id="rose" alt="" /></div>
+        <div class="leaf" id="leaf"><div class="face"></div><div class="back"></div></div>
+        <div class="cover"><div class="face"><span>Rose Book<small>كتاب الورود</small></span></div><div class="back"></div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="prev" type="button" aria-label="Previous page"><span class="arr">←</span></button>
+      <div class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <button class="btn solid" id="next" type="button"><span id="nextLbl" data-i18n="ctl.open">Open the book</span> <span class="arr">→</span></button>
+    </div>
+    <p class="hint mono" data-i18n="ctl.hint">In the browser: click, swipe, or use the arrow keys. In TouchDesigner: your hand.</p>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <h2 class="rv" data-i18n="how.title">How it <em>works</em></h2>
+      <p class="sub rv" data-i18n="how.sub">Everything runs live inside one TouchDesigner project, offline, on a normal laptop with a webcam.</p>
+      <div class="flow rv">
+        <div><span class="n mono keep">01 · camera</span><h3 data-i18n="how.1t">Your hand</h3><p data-i18n="how.1p">MediaPipe hand tracking reads your wrist and fingers from the webcam, many times a second.</p></div>
+        <div><span class="n mono keep">02 · gesture</span><h3 data-i18n="how.2t">The gesture</h3><p data-i18n="how.2p">Move your hand across the centre line to turn a page. Twist like a door knob, or flip your palm, if you prefer: it’s one setting.</p></div>
+        <div><span class="n mono keep">03 · book</span><h3 data-i18n="how.3t">The book</h3><p data-i18n="how.3p">The page turns in 3D, a rose grows from bud to bloom over 48 frames, and light particles drift around it.</p></div>
+      </div>
+      <figure class="shot rv">
+        <img src="preview.jpg" alt="The Rose Book running in TouchDesigner: an open book with a pink rose and glowing particles" width="1280" height="720" loading="lazy" />
+        <figcaption class="mono" data-i18n="how.cap">Live output from TouchDesigner</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="get">
+    <div class="wrap">
+      <h2 class="rv" data-i18n="get.title">Get the <em>project</em></h2>
+      <p class="sub rv" data-i18n="get.sub">Free to download. The .toe file opens with the whole book already built.</p>
+      <ol class="steps rv">
+        <li><b data-i18n="get.1t">Download the project</b><p data-i18n="get.1p">Use the button below, then unzip it anywhere. The folder can live anywhere: it finds its own files.</p></li>
+        <li><b data-i18n="get.2t">Get the MediaPipe component</b><p data-i18n="get.2p">It’s 187 MB, too big for GitHub. Right-click <code>get_mediapipe.ps1</code> → <b>Run with PowerShell</b>. It downloads it from the official release into <code>toxes/</code>.</p></li>
+        <li><b data-i18n="get.3t">Open rose_book.toe</b><p data-i18n="get.3p">In TouchDesigner. Allow camera access when asked, and wait until the hand tracking shows your hand.</p></li>
+        <li><b data-i18n="get.4t">Turn a page</b><p data-i18n="get.4p">Move your hand across the centre of the camera view. The first move opens the cover; each one after turns a page.</p></li>
+      </ol>
+      <div class="ctas rv">
+        <a class="btn solid" href="https://github.com/marwathebest/rose-book-touchdesigner/archive/refs/heads/main.zip"><span data-i18n="get.zip">Download .zip</span> ↓</a>
+        <a class="btn" href="https://github.com/marwathebest/rose-book-touchdesigner" target="_blank" rel="noopener noreferrer"><span data-i18n="get.gh">View on GitHub</span> ↗</a>
+      </div>
+      <p class="req rv" data-i18n="get.req">Needs TouchDesigner 2025.33230 or newer (the free license works) and a webcam. On a Mac, download <code>release.zip</code> v0.6.0 from mediapipe-touchdesigner and copy <code>toxes/MediaPipe.tox</code> in by hand.</p>
+      <p class="note rv" data-i18n="get.test">No camera? Select <code>rose_book</code>, open the <b>Book</b> page of its parameters, turn on <b>Test Without Camera</b> and drag <b>Test Hand Roll</b> from 1 to −1. Don’t press Space: it pauses the timeline.</p>
+    </div>
+  </section>
+
+  <section id="screen">
+    <div class="wrap two">
+      <div>
+        <h2 class="rv" data-i18n="scr.title">Screen-only <em>mode</em></h2>
+        <p class="sub rv" data-i18n="scr.sub">For an exhibition or a big screen: hide the TouchDesigner editor and show only the book, full screen.</p>
+        <p class="note rv" data-i18n="scr.ready">rose_book.toe is already set up for this. Just press <kbd>F1</kbd>.</p>
+      </div>
+      <ol class="steps rv" style="margin-top:0">
+        <li><b data-i18n="scr.1t">Press F1</b><p data-i18n="scr.1p">This is Perform Mode: the editor disappears and only the book’s output (<code>/project1/rose_book/final</code>) stays on screen. <kbd>Esc</kbd> brings the editor back.</p></li>
+        <li><b data-i18n="scr.2t">Fill the screen</b><p data-i18n="scr.2p">Click the <code>perform</code> operator at the top level (<code>/</code>). In its parameters set <b>Opening Size</b> to <b>Fill Location</b>, turn <b>Borders</b> off, and for a second screen set <b>Justify and Offset to…</b> to <b>Specify Display</b> and choose the <b>Display</b>.</p></li>
+        <li><b data-i18n="scr.3t">Open straight into the screen</b><p data-i18n="scr.3p">Open the <b>Window Placement</b> dialog (under the <b>Edit</b> or <b>Dialogs</b> menu, depending on your build), turn on <b>Start in Perform Mode</b>, then save with <kbd>Ctrl+S</kbd>. Next time the file opens, it’s screen-only from the first second.</p></li>
+        <li><b data-i18n="scr.4t">Keep it clean</b><p data-i18n="scr.4p">Keep the camera in front of the screen at hand height, and keep <b>Show Center Line</b> off so visitors only see the book.</p></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span data-i18n="foot.by">Made by <a href="https://github.com/marwathebest" target="_blank" rel="noopener noreferrer">Marwah Abdullah Sabei</a></span>
+    <span data-i18n="foot.mp">Hand tracking: <a href="https://github.com/torinmb/mediapipe-touchdesigner" target="_blank" rel="noopener noreferrer">mediapipe-touchdesigner</a> by Torin Blankensmith (MIT)</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Arabic copy (English is the HTML) ── */
+  var AR = {
+    'nav.how': 'كيف يشتغل', 'nav.get': 'حمّله', 'nav.screen': 'وضع الشاشة',
+    'hero.eyebrow': 'TouchDesigner · MediaPipe · Python',
+    'hero.title': 'كتاب <em>الورود</em>',
+    'hero.lede': 'كتاب تقلّب صفحاته بيدك. تحرّك يدك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.',
+    'ctl.open': 'افتح الكتاب', 'ctl.next': 'الصفحة التالية', 'ctl.close': 'سكّر الكتاب',
+    'ctl.hint': 'في المتصفح: اضغط أو اسحب أو استخدم الأسهم. وفي TouchDesigner: بيدك.',
+    'how.title': 'كيف <em>يشتغل</em>',
+    'how.sub': 'كل شي يشتغل مباشرة داخل مشروع TouchDesigner واحد، بدون إنترنت، على لابتوب عادي مع كاميرا.',
+    'how.1t': 'يدك', 'how.1p': 'تتبّع اليد في MediaPipe يقرأ معصمك وأصابعك من الكاميرا عشرات المرات في الثانية.',
+    'how.2t': 'الحركة', 'how.2p': 'مرّر يدك عبر خط المنتصف عشان تقلب صفحة. وتقدر تختار لفّة المعصم أو قلب الكف بدلها، من إعداد واحد.',
+    'how.3t': 'الكتاب', 'how.3p': 'تنقلب الصفحة بشكل ثلاثي الأبعاد، وتنمو وردة من برعم لين تتفتّح خلال 48 إطار، وحولها جزيئات ضوء.',
+    'how.cap': 'لقطة حيّة من TouchDesigner',
+    'get.title': 'حمّل <em>المشروع</em>',
+    'get.sub': 'مجاني. ملف ‎.toe‎ ينفتح والكتاب مبني فيه جاهز.',
+    'get.1t': 'حمّل المشروع', 'get.1p': 'من الزر تحت، وفكّ الضغط في أي مكان. المجلد يلقى ملفاته بنفسه وين ما كان.',
+    'get.2t': 'جيب مكوّن MediaPipe', 'get.2p': 'حجمه 187 ميقا، أكبر من حد GitHub. اضغط بالزر اليمين على <code>get_mediapipe.ps1</code> ← <b>Run with PowerShell</b>، ويحمّله من الإصدار الرسمي داخل مجلد <code>toxes/</code>.',
+    'get.3t': 'افتح rose_book.toe', 'get.3p': 'في TouchDesigner. اسمح للكاميرا، وانتظر لين يظهر تتبّع يدك.',
+    'get.4t': 'اقلب صفحة', 'get.4p': 'مرّر يدك عبر منتصف صورة الكاميرا. أول حركة تفتح الغلاف، وكل حركة بعدها تقلب صفحة.',
+    'get.zip': 'تحميل ‎.zip‎', 'get.gh': 'شوفه على GitHub',
+    'get.req': 'يحتاج TouchDesigner 2025.33230 أو أحدث (الرخصة المجانية تكفي) وكاميرا. على الماك: حمّل <code>release.zip</code> إصدار v0.6.0 من mediapipe-touchdesigner وانسخ <code>toxes/MediaPipe.tox</code> بيدك.',
+    'get.test': 'ما عندك كاميرا؟ اختر <code>rose_book</code>، وافتح صفحة <b>Book</b> في باراميتراته، وشغّل <b>Test Without Camera</b> وحرّك <b>Test Hand Roll</b> من 1 إلى ‎−1. لا تضغط Space لأنه يوقف التايملاين.',
+    'scr.title': 'وضع <em>الشاشة فقط</em>',
+    'scr.sub': 'للمعارض والشاشات الكبيرة: تخفي واجهة TouchDesigner وتعرض الكتاب بس، بملء الشاشة.',
+    'scr.ready': 'ملف rose_book.toe مضبوط لهذا من الحين. بس اضغط <kbd>F1</kbd>.',
+    'scr.1t': 'اضغط F1', 'scr.1p': 'هذا وضع Perform: تختفي الواجهة ويبقى ناتج الكتاب بس (<code>/project1/rose_book/final</code>). و<kbd>Esc</kbd> يرجّع الواجهة.',
+    'scr.2t': 'املأ الشاشة', 'scr.2p': 'اضغط على عنصر <code>perform</code> في المستوى الأعلى (<code>/</code>). وفي باراميتراته خلّ <b>Opening Size</b> على <b>Fill Location</b>، وطفّ <b>Borders</b>، ولو عندك شاشة ثانية خلّ <b>Justify and Offset to…</b> على <b>Specify Display</b> واختر رقمها من <b>Display</b>.',
+    'scr.3t': 'خلّه يفتح على الشاشة مباشرة', 'scr.3p': 'افتح نافذة <b>Window Placement</b> (من قائمة <b>Edit</b> أو <b>Dialogs</b> حسب نسختك) وشغّل <b>Start in Perform Mode</b>، وبعدها احفظ بـ<kbd>Ctrl+S</kbd>. المرة الجاية ينفتح الملف على الشاشة فقط من أول ثانية.',
+    'scr.4t': 'خلّها نظيفة', 'scr.4p': 'حط الكاميرا قدام الشاشة على مستوى اليد، وخلّ <b>Show Center Line</b> مطفي عشان الزوار يشوفون الكتاب بس.',
+    'foot.by': 'من صنع <a href="https://github.com/marwathebest" target="_blank" rel="noopener noreferrer">مروة عبدالله سبعي</a>',
+    'foot.mp': 'تتبّع اليد: <a href="https://github.com/torinmb/mediapipe-touchdesigner" target="_blank" rel="noopener noreferrer">mediapipe-touchdesigner</a> من Torin Blankensmith (MIT)'
+  };
+  var EN = { title: document.title };
+  var nodes = document.querySelectorAll('[data-i18n]');
+  nodes.forEach(function (el) { EN[el.getAttribute('data-i18n')] = el.innerHTML; });
+  EN['ctl.next'] = 'Next page'; EN['ctl.close'] = 'Close the book';
+  var langBtn = document.getElementById('langBtn');
+  function setLang(l) {
+    var d = l === 'ar' ? AR : EN;
+    nodes.forEach(function (el) { var v = d[el.getAttribute('data-i18n')]; if (v != null) el.innerHTML = v; });
+    root.lang = l; root.dir = l === 'ar' ? 'rtl' : 'ltr';
+    document.title = l === 'ar' ? 'كتاب الورود: كتاب في TouchDesigner تقلّبه بيدك' : EN.title;
+    langBtn.textContent = l === 'ar' ? 'English' : 'عربي';
+    try { localStorage.setItem('rb-lang', l); } catch (e) {}
+    render();
+  }
+  langBtn.addEventListener('click', function () { setLang(root.lang === 'ar' ? 'en' : 'ar'); });
+
+  /* ── book preview ── */
+  var CDN = 'https://cdn.jsdelivr.net/gh/marwathebest/rose-book-touchdesigner@main/';
+  var PAGES = [
+    { dir: 'page1_red', en: 'A red rose', ar: 'وردة حمرا' },
+    { dir: 'page2_pink', en: 'A pink rose', ar: 'وردة وردية' },
+    { dir: 'page3_magenta', en: 'Two magenta roses', ar: 'وردتين فوشيا' },
+    { dir: 'page4_white', en: 'Three white roses', ar: 'ثلاث ورود بيضاء' }
+  ];
+  var FRAMES = []; for (var f = 0; f <= 46; f += 2) FRAMES.push(f); FRAMES.push(47);
+  var cache = {};
+  function src(p, f) { return CDN + PAGES[p].dir + '/frame_' + ('000' + f).slice(-4) + '.png'; }
+  function preload(p) {
+    if (p < 0 || p > 3 || cache[p]) return;
+    cache[p] = FRAMES.map(function (f) { var i = new Image(); i.decoding = 'async'; i.src = src(p, f); return i; });
+  }
+
+  var book = document.getElementById('book'), rose = document.getElementById('rose'), leaf = document.getElementById('leaf');
+  var next = document.getElementById('next'), prev = document.getElementById('prev'), nextLbl = document.getElementById('nextLbl');
+  var dots = document.querySelectorAll('.dots i'), pgNum = document.getElementById('pgNum'), pgName = document.getElementById('pgName');
+  var state = 0, busy = false, grow = null;   // 0 = closed, 1..4 = page
+
+  function render() {
+    var ar = root.lang === 'ar';
+    book.classList.toggle('closed', state === 0);
+    book.classList.toggle('open', state > 0);
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === state - 1); });
+    prev.disabled = state === 0;
+    var key = state === 0 ? 'ctl.open' : state === 4 ? 'ctl.close' : 'ctl.next';
+    nextLbl.textContent = (ar ? AR : EN)[key].replace(/<[^>]+>/g, '');
+    if (state > 0) {
+      pgNum.textContent = 'page ' + state + ' / 4';
+      pgName.textContent = ar ? PAGES[state - 1].ar : PAGES[state - 1].en;
+    }
+  }
+  function growRose(p) {
+    cancelAnimationFrame(grow);
+    preload(p); preload(p + 1);
+    if (reduce) { rose.src = src(p, 47); return; }
+    rose.src = src(p, 0);
+    var start = null, dur = 2500;
+    (function step(t) {
+      if (start === null) start = t;
+      var k = Math.min(1, (t - start) / dur);
+      var e = 1 - Math.pow(1 - k, 2);
+      var idx = Math.round(e * (FRAMES.length - 1));
+      var img = cache[p][idx];
+      if (img.complete && img.naturalWidth) rose.src = img.src;
+      if (k < 1) grow = requestAnimationFrame(step);
+    })(performance.now());
+  }
+  function go(dir) {
+    if (busy) return;
+    var to = state + dir;
+    if (to < 0) return;
+    if (to > 4) to = 0;                       // after page 4 the book closes
+    busy = true;
+    var pageTurn = state > 0 && to > 0;
+    if (pageTurn && !reduce) {
+      leaf.classList.remove('turn', 'back-turn'); void leaf.offsetWidth;
+      leaf.classList.add('turn'); if (dir < 0) leaf.classList.add('back-turn');
+    }
+    rose.removeAttribute('src');
+    setTimeout(function () {
+      state = to; render();
+      if (state > 0) growRose(state - 1);
+      setTimeout(function () { leaf.classList.remove('turn', 'back-turn'); busy = false; }, reduce ? 0 : 450);
+    }, reduce ? 0 : (pageTurn ? 450 : 500));
+  }
+  next.addEventListener('click', function () { go(1); });
+  prev.addEventListener('click', function () { go(-1); });
+  book.addEventListener('click', function () { go(1); });
+  document.addEventListener('keydown', function (e) {
+    // the book itself always opens like a left-to-right book
+    if (e.key === 'ArrowRight') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+  var sx = null;
+  book.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+  book.addEventListener('touchend', function (e) {
+    if (sx === null) return; var dx = e.changedTouches[0].clientX - sx; sx = null;
+    if (Math.abs(dx) > 40) { e.preventDefault(); go(dx < 0 ? 1 : -1); }
+  });
+  preload(0);
+
+  /* ── glowing particles, like the TouchDesigner version ── */
+  var cv = document.getElementById('sparks'), cx = cv.getContext('2d'), P = [], W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
+  function size() { W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  function spark() { return { x: Math.random() * W, y: H + Math.random() * H, r: Math.random() * 2.2 + .6, v: Math.random() * .35 + .12, a: Math.random() * .6 + .25, w: Math.random() * 6.28 }; }
+  size(); addEventListener('resize', size);
+  for (var i = 0; i < 70; i++) { var s = spark(); s.y = Math.random() * H; P.push(s); }
+  function drawSparks(t) {
+    cx.clearRect(0, 0, W, H);
+    for (var i = 0; i < P.length; i++) {
+      var s = P[i];
+      if (!reduce) { s.y -= s.v; s.x += Math.sin(t / 1800 + s.w) * .15; }
+      if (s.y < -10) P[i] = spark();
+      var g = cx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
+      g.addColorStop(0, 'rgba(255, 170, 205,' + s.a + ')');
+      g.addColorStop(1, 'rgba(255, 120, 170, 0)');
+      cx.fillStyle = g; cx.beginPath(); cx.arc(s.x, s.y, s.r * 5, 0, 6.283); cx.fill();
+    }
+    if (!reduce) requestAnimationFrame(drawSparks);
+  }
+  requestAnimationFrame(drawSparks);
+
+  /* ── reveal ── */
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.rv').forEach(function (el) { io.observe(el); });
+
+  if (root.lang === 'ar') setLang('ar'); else render();
+})();
+</script>
+</body>
+</html>

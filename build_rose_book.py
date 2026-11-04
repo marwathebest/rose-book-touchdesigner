@@ -2,7 +2,7 @@
 # يشغّل book_body.py (اللي يبني الكتاب) ويكتب أي خطأ في build_log.txt
 import traceback
 
-_DIR = 'C:/Users/MarwahSabei/Desktop/roses_animation'
+_DIR = project.folder   # مجلد rose_book.toe
 _LOG = _DIR + '/build_log.txt'
 
 _g = dict(globals())

@@ -1,43 +1,62 @@
 # Rose Book — كتاب الورود 🌹
 
-**A TouchDesigner book you control with your hand. Twist your wrist in front of the camera and a page turns, and a rose grows out of it.**
+**A TouchDesigner book you control with your hand. Move your hand in front of the camera and a page turns, and a rose grows out of it.**
 
-**كتاب تفاعلي في TouchDesigner ينفتح بلفّة اليد. تلفّ كفّك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.**
+**كتاب تفاعلي في TouchDesigner تقلّب صفحاته بيدك. تحرّك يدك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.**
+
+🌐 **Website & web preview:** https://marwathebest.github.io/rose-book-touchdesigner/
 
 ![Rose Book preview](docs/preview.jpg)
 
 ## الفكرة | Concept
 
-- اللفّة الأولى تفتح الغلاف، وكل لفّة بعدها تقلب صفحة.
+- أول حركة تفتح الغلاف، وكل حركة بعدها تقلب صفحة.
 - كل صفحة فيها وردة مختلفة: حمرا، وردية، وردتين فوشيا، وثلاث ورود بيضاء.
 - الغصن ينمو والأوراق تطلع، وبعدها الوردة تتفتّح من برعم لين تكتمل، وحولها جزيئات ضوء.
-- اللفّة بالعكس ترجّع صفحة. وبعد الصفحة الرابعة يتقفّل الكتاب.
+- الحركة بالعكس ترجّع صفحة. وبعد الصفحة الرابعة يتقفّل الكتاب.
 
-The wrist rotation is read from MediaPipe hand tracking. A "door-knob twist" gesture proved much more reliable than flipping the palm.
+**Gestures** (choose in `rose_book` → **Book** → *Hand Gesture*):
+- **Swipe across the centre line** (default)
+- **Twist**, like a door knob
+- **Flip palm**
 
-## التقنيات | Tech
+## التشغيل | Run it
 
-- **TouchDesigner**: يبني الشبكة كاملة بسكربت بايثون، وفيها مكونات Geo وMaterials ونظام جزيئات
-- **MediaPipe** hand tracking (via [torinmb/mediapipe-touchdesigner](https://github.com/torinmb/mediapipe-touchdesigner))
-- **Python**: [`book_body.py`](book_body.py) يبني `/project1/rose_book` كامل من الصفر
-- 4 × 48 PNG frames with transparent background (640×896) for the rose growth animation
+1. **Download** this repo (Code → Download ZIP) and unzip it anywhere. The project finds its own files, so the folder can live anywhere.
+2. **Get MediaPipe.tox** (187 MB, too big for GitHub): right-click [`get_mediapipe.ps1`](get_mediapipe.ps1) → **Run with PowerShell**. It downloads it from the official [mediapipe-touchdesigner v0.6.0](https://github.com/torinmb/mediapipe-touchdesigner/releases/tag/v0.6.0) release into `toxes/`.
+   *On Mac:* download `release.zip` v0.6.0 yourself and copy `release/toxes/MediaPipe.tox` into `toxes/`.
+3. **Open [`rose_book.toe`](rose_book.toe)** in TouchDesigner **2025.33230 or newer** (the free license works). Allow camera access and wait until the hand tracking sees your hand.
+4. Move your hand across the centre of the camera view to turn a page.
+
+**للتجربة بدون كاميرا:** شغّل *Test Without Camera* من صفحة **Book** في باراميترات `rose_book`، وحرّك *Test Hand Roll* من 1 إلى ‎-1. لا تضغط Space لأنه يوقف التايملاين.
+
+## وضع الشاشة فقط | Screen-only (Perform Mode)
+
+`rose_book.toe` is already set so Perform Mode shows only the book (`/project1/rose_book/final`).
+
+1. Press **F1** → only the book is on screen. **Esc** brings the editor back.
+2. To fill a screen: select the top-level `perform` operator → **Opening Size** = *Fill Location*, **Borders** off. For a second screen: **Justify and Offset to…** = *Specify Display* and pick the **Display**.
+3. To open straight into the screen every time: **Window Placement** dialog (Edit or Dialogs menu) → turn on **Start in Perform Mode** → save (**Ctrl+S**).
 
 ## الملفات | Files
 
 | File | What it does |
 |---|---|
-| `book_body.py` | يبني الكتاب: الصفحات، قلب الصفحة، الورود، الجزيئات، وقراءة اليد |
+| `rose_book.toe` | The TouchDesigner project, with the book already built |
+| `toxes/` | MediaPipe components (hand tracking etc.). `MediaPipe.tox` comes from `get_mediapipe.ps1` |
+| `get_mediapipe.ps1` | Downloads `MediaPipe.tox` from the official release |
+| `book_body.py` | يبني الكتاب من الصفر: الصفحات، قلب الصفحة، الورود، الجزيئات، وقراءة اليد |
 | `build_rose_book.py` | يشغّل `book_body.py` ويكتب أي خطأ في `build_log.txt` |
-| `page1_red/` … `page4_white/` | إطارات نمو كل وردة (`frame_0000` فاضي، و`0047` الوردة مكتملة) |
+| `page1_red/` … `page4_white/` | 48 PNG frames per rose (640×896, transparent). `frame_0000` is empty, `0047` is the full bloom |
+| `docs/` | The website |
 
-## التشغيل | Run it
+**Rebuild the book from code:** in `/project1`, select `rose_book_builder` (it reads `build_rose_book.py`) and press **Ctrl+R**. It rebuilds `/project1/rose_book`.
 
-1. افتح مشروع [mediapipe-touchdesigner](https://github.com/torinmb/mediapipe-touchdesigner) وتأكد إن `hand_tracking` شغّال.
-2. عدّل `ROSE_FOLDER` في `book_body.py` و`_DIR` في `build_rose_book.py` لمسار هذا المجلد عندك.
-3. في `/project1` أضف **Text DAT** باسم `rose_book_builder`، واربطه بملف `build_rose_book.py`، واضغط **Ctrl+R**.
-4. الناتج النهائي في `rose_book/final`.
+## التقنيات | Tech
 
-**للتجربة بدون كاميرا:** شغّل *Test Without Camera* من صفحة **Book** في باراميترات `rose_book`، وحرّك *Test Hand Roll* من 1 إلى ‎-1. لا تضغط Space لأنه يوقف التايملاين.
+- **TouchDesigner**: Geo components, materials, a particle system, all generated by a Python script
+- **MediaPipe** hand tracking via [torinmb/mediapipe-touchdesigner](https://github.com/torinmb/mediapipe-touchdesigner) (MIT, see `toxes/LICENSE-mediapipe-touchdesigner.txt`)
+- **Python**
 
 ---
 

@@ -3,7 +3,8 @@
 # يشغّله build_rose_book.py (Ctrl+R على rose_book_builder) ويبني /project1/rose_book
 # الناتج النهائي = rose_book/final
 
-ROSE_FOLDER = 'C:/Users/MarwahSabei/Desktop/roses_animation'
+# مجلد المشروع نفسه (اللي فيه rose_book.toe)، فيشتغل على أي جهاز
+ROSE_FOLDER = project.folder
 
 root = me.parent()
 
@@ -73,11 +74,11 @@ p = pg.appendFloat('Camsway', label='Camera Sway')[0]
 p.default = 1; p.normMin = 0; p.normMax = 3; p.val = 1
 pg.appendPulse('Nextpage', label='Next Page (test)')
 pg.appendToggle('Usetest', label='Test Without Camera')
-pg.appendToggle('Snapshot', label='Save Preview For Claude')
-base.par.Snapshot = True
+pg.appendToggle('Snapshot', label='Save Debug Preview')
+base.par.Snapshot = False
 p = pg.appendFloat('Testroll', label='Test Hand Roll')[0]
 p.normMin = -1; p.normMax = 1
-base.par.Rosefolder = ROSE_FOLDER
+base.par.Rosefolder.expr = 'project.folder'
 
 
 # يدور على CHOP فيه نقاط اليد (pinky_mcp / index_finger_mcp) من MediaPipe

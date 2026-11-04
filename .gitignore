@@ -1,10 +1,23 @@
 # runtime files written by the book
 camera.jpg
 snap.jpg
+snap.txt
 /preview.jpg
 hand_debug.txt
 status.txt
 roll_log.txt
 build_log.txt
+logic_log.txt
+deform_log.txt
+fx_log.txt
 next.txt
 README.txt
+
+# MediaPipe.tox is 187 MB (over GitHub's limit): get it with get_mediapipe.ps1
+toxes/MediaPipe.tox
+
+# TouchDesigner autosaves and backups
+Backup/
+rose_book.*.toe
+*.toe.dir/
+*.toe.toc
