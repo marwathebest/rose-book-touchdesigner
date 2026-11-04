@@ -71,7 +71,7 @@
   @media (max-width: 720px) { .nav a.l { display: none; } }
 
   /* hero */
-  .hero { padding-block: clamp(24px, 5vw, 56px) 40px; text-align: center; }
+  .hero { padding-block: clamp(24px, 5vw, 56px) 40px; text-align: center; overflow-x: clip; }
   .eyebrow { color: var(--rose); }
   h1 {
     font-family: var(--f-display); font-weight: 300;
@@ -83,75 +83,59 @@
   :lang(ar) h1 em { font-style: normal; }
   .lede { max-width: 34em; margin: 18px auto 0; color: var(--ink-2); font-size: clamp(17px, 2vw, 20px); }
 
-  /* the book */
-  .stage { margin: 36px auto 0; max-width: 860px; perspective: 2200px; }
+  /* the book: same geometry as book_body.py (board 2.12 × 1.52, pages 1 × 1.4) */
+  .stage { position: relative; margin: 36px auto 0; max-width: 860px; perspective: 1900px; }
+  .scene { position: relative; transform-style: preserve-3d; will-change: transform; }
   .book {
-    position: relative; aspect-ratio: 16 / 10.6; width: 100%;
-    direction: ltr;
-    transform-style: preserve-3d;
-    user-select: none; -webkit-user-select: none; touch-action: pan-y;
+    position: relative; width: 100%; aspect-ratio: 2.12 / 1.52;
+    direction: ltr; transform-style: preserve-3d;
+    user-select: none; -webkit-user-select: none; touch-action: none; cursor: grab;
   }
+  .book.dragging { cursor: grabbing; }
   .board {
-    position: absolute; inset: 3% 2%;
-    background: linear-gradient(160deg, #a3162f, var(--rose-deep));
-    border-radius: 6px;
-    box-shadow: 0 30px 80px -20px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.04) inset;
-    transition: opacity .5s ease;
+    position: absolute; inset: 0; border-radius: 6px;
+    background: linear-gradient(160deg, #8a1828, #5a0f18);
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,.9);
+    transition: clip-path .6s ease;
+    clip-path: inset(0 0 0 0 round 6px);
   }
-  .half {
-    position: absolute; top: 6%; bottom: 6%; width: 46%;
-    background: linear-gradient(180deg, var(--page), var(--page-2));
-    overflow: hidden;
+  .book.closed .board { clip-path: inset(0 0 0 50% round 6px); }
+  .page, .leaf { position: absolute; top: 3.95%; height: 92.1%; width: 47.17%; }
+  .page { background: linear-gradient(180deg, var(--page), var(--page-2)); }
+  .page.l { left: 2.83%; box-shadow: inset -22px 0 30px -20px rgba(90,20,30,.45); }
+  .page.r { left: 50%; box-shadow: inset 22px 0 30px -20px rgba(90,20,30,.45); }
+  .page.l, .spine { transition: opacity .3s ease; }
+  .spine { position: absolute; left: 49.65%; width: .7%; top: 3.95%; height: 92.1%; background: #7f705c; }
+  .leaf { left: 50%; transform-origin: 0 50%; transform-style: preserve-3d; pointer-events: none; }
+  .leaf .front, .leaf .back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+  .leaf .front { background: linear-gradient(180deg, var(--page), var(--page-2)); }
+  .leaf .back { transform: rotateY(180deg); background: linear-gradient(180deg, var(--page-2), var(--page)); }
+  .leaf .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(60,10,20,.5), rgba(60,10,20,0) 70%); opacity: 0; }
+  .leaf .rose { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .leaf .cover {
+    position: absolute; inset: 0; display: none; place-items: center; text-align: center;
+    background: linear-gradient(150deg, #8a1828, #5a0f18); border-radius: 0 6px 6px 0;
   }
-  .half.l { left: 4%; border-radius: 3px 0 0 3px; box-shadow: inset -18px 0 30px -18px rgba(90,20,30,.45); }
-  .half.r { right: 4%; border-radius: 0 3px 3px 0; box-shadow: inset 18px 0 30px -18px rgba(90,20,30,.45); }
-  .rose {
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    height: 100%; width: auto; max-width: none; pointer-events: none;
-    filter: drop-shadow(0 0 14px rgba(255, 190, 210, .35));
-  }
-  .pagelabel { position: absolute; left: 10%; top: 9%; color: rgba(90, 20, 30, .55); }
-  .pagelabel b { display: block; font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: clamp(18px, 2.6vw, 30px); color: rgba(90, 20, 30, .8); text-transform: none; letter-spacing: 0; margin-top: 4px; }
-  :lang(ar) .pagelabel { left: auto; right: 10%; text-align: right; }
+  .leaf.is-cover .cover { display: grid; }
+  .leaf.is-cover .rose { display: none; }
+  .cover span { font-family: 'Fraunces', serif; font-style: italic; font-size: clamp(22px, 4vw, 46px); color: #f9d5dd; line-height: 1.1; }
+  .cover small { display: block; font-family: 'Amiri', serif; font-style: normal; font-size: .62em; margin-top: 8px; color: #f3b6c6; }
+  .petals { position: absolute; left: -20%; top: -25%; width: 140%; height: 150%; pointer-events: none; z-index: 2; }
+  .petals { mix-blend-mode: screen; }
+  @supports (mix-blend-mode: plus-lighter) { .petals { mix-blend-mode: plus-lighter; } }   /* like the Add composite in TouchDesigner */
 
-  .cover {
-    position: absolute; top: 3%; bottom: 3%; left: 50%; width: 48%;
-    transform-origin: left center;
-    transform-style: preserve-3d;
-    transition: transform 1s cubic-bezier(.6,.05,.25,1);
-  }
-  .cover .face, .cover .back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 0 6px 6px 0; }
-  .cover .face {
-    background: linear-gradient(150deg, #b51d3a, #6e0b1e);
-    display: grid; place-items: center; text-align: center;
-    box-shadow: inset 0 0 0 10px rgba(255,255,255,.04), 0 20px 50px -20px #000;
-  }
-  .cover .face span { font-family: 'Fraunces', serif; font-style: italic; font-size: clamp(22px, 4vw, 46px); color: #f9d5dd; line-height: 1.1; }
-  .cover .face small { display: block; font-family: 'Amiri', serif; font-style: normal; font-size: .62em; margin-top: 8px; color: #f3b6c6; }
-  .cover .back { transform: rotateY(180deg); background: linear-gradient(180deg, var(--page), var(--page-2)); border-radius: 6px 0 0 6px; }
-  .book.open .cover { transform: rotateY(-180deg); }
-  .book.closed .board { opacity: .0; }
-  .book.closed .half { opacity: 0; }
-  .book.open .half.l { transform: translateZ(2px); }
-  .half { transition: opacity .5s ease .2s; }
+  .camera-panel { max-width: 860px; margin: 18px auto 0; display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 14px; align-items: center; text-align: start; }
+  .camera-view { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 14px; border: 1px solid var(--rule); background: #090507; }
+  .camera-view video, .camera-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  .camera-view video { opacity: .8; }
+  .camera-view canvas { pointer-events: none; }
+  .camera-copy { color: var(--ink-2); font-size: 15px; }
+  .camera-copy strong { color: var(--ink); display: block; font-size: 17px; margin-bottom: 4px; }
+  .camera-status { color: var(--rose); margin-top: 7px; min-height: 1.6em; }
+  .camera-panel[hidden] { display: none; }
+  @media (max-width: 620px) { .camera-panel { grid-template-columns: 1fr; } .camera-view { max-width: 320px; width: 100%; margin: auto; } }
 
-  .leaf {
-    position: absolute; top: 9%; bottom: 9%; left: 50%; width: 46%;
-    transform-origin: left center; transform-style: preserve-3d;
-    pointer-events: none; opacity: 0;
-  }
-  .leaf .face, .leaf .back { position: absolute; inset: 0; backface-visibility: hidden; background: linear-gradient(180deg, var(--page), var(--page-2)); }
-  .leaf .back { transform: rotateY(180deg); }
-  .leaf.turn { opacity: 1; animation: turn .9s cubic-bezier(.55,.05,.3,1) forwards; }
-  .leaf.turn.back-turn { animation-name: turnback; }
-  .leaf.live-turn { opacity: 1; animation: none; transition: none; filter: drop-shadow(12px 10px 14px rgba(45,8,18,.28)); }
-  .petal-fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-  .petal { position: absolute; left: 50%; top: 42%; width: 9px; height: 14px; border-radius: 70% 25% 70% 25%; background: linear-gradient(145deg,#ffb0ca,#a91545); opacity: 0; animation: petalFly var(--life,1.8s) ease-out forwards; }
-  @keyframes petalFly { 0% { opacity: .9; transform: translate(-50%,-50%) rotate(0) scale(.5); } 100% { opacity: 0; transform: translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(1.1); } }
-  @keyframes turn { from { transform: rotateY(0); } to { transform: rotateY(-180deg); } }
-  @keyframes turnback { from { transform: rotateY(-180deg); } to { transform: rotateY(0); } }
-
-  .controls { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 22px; flex-wrap: wrap; }
+  .controls { display: flex; justify-content: center; align-items: center; gap: 12px 14px; margin-top: 22px; flex-wrap: wrap; }
   .btn {
     display: inline-flex; align-items: center; gap: 10px;
     font: inherit; font-size: 15px; cursor: pointer; text-decoration: none;
@@ -162,22 +146,18 @@
   .btn:hover { border-color: var(--rose); }
   .btn.solid { background: var(--rose); color: #2a0610; border-color: var(--rose); font-weight: 600; }
   .btn.solid:hover { background: #f38db1; }
+  .btn.on { border-color: var(--rose); background: rgba(236,111,155,.14); }
   .btn:disabled { opacity: .35; cursor: default; }
   .arr { display: inline-block; }
   [dir="rtl"] .arr { transform: scaleX(-1); }
   .dots { display: flex; gap: 8px; }
   .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); transition: background .3s ease; }
   .dots i.on { background: var(--rose); }
+  .wrist { display: inline-flex; align-items: center; gap: 10px; color: var(--ink-2); font-size: 14.5px; }
+  .wrist input { accent-color: var(--rose); width: 140px; }
+  .wrist.hidden { display: none; }
   .hint { margin-top: 12px; color: var(--ink-3); text-align: center; }
-  .camera-panel { max-width: 860px; margin: 18px auto 0; display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 14px; align-items: center; text-align: start; }
-  .camera-view { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 14px; border: 1px solid var(--rule); background: #090507; }
-  .camera-view video, .camera-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-  .camera-view canvas { pointer-events: none; }
-  .camera-copy { color: var(--ink-2); font-size: 15px; }
-  .camera-copy strong { color: var(--ink); display: block; font-size: 17px; margin-bottom: 4px; }
-  .camera-status { color: var(--rose); margin-top: 7px; min-height: 1.6em; }
-  .camera-panel[hidden] { display: none; }
-  @media (max-width: 620px) { .camera-panel { grid-template-columns: 1fr; } .camera-view { max-width: 320px; width: 100%; margin: auto; } }
+  .camstate { margin-top: 6px; min-height: 1.4em; color: var(--rose); text-align: center; font-size: 14px; }
 
   /* sections */
   section { padding-block: clamp(56px, 8vw, 100px); border-top: 1px solid var(--rule); }
@@ -258,25 +238,32 @@
     <p class="lede" data-i18n="hero.lede">A book you turn with your hand. Move your hand in front of the camera, a page turns, and a rose grows out of it.</p>
 
     <div class="stage">
-      <div class="book closed" id="book" role="group" aria-label="Interactive preview of the Rose Book">
-        <div class="board"></div>
-        <div class="half l"><div class="pagelabel mono keep"><span id="pgNum">page 1 / 4</span><b id="pgName">A red rose</b></div></div>
-        <div class="half r"><img class="rose" id="rose" alt="" /><div class="petal-fx" id="petalFx" aria-hidden="true"></div></div>
-        <div class="leaf" id="leaf"><div class="face"></div><div class="back"></div></div>
-        <div class="cover"><div class="face"><span>Rose Book<small>كتاب الورود</small></span></div><div class="back"></div></div>
+      <div class="scene" id="scene">
+        <div class="book closed" id="book" role="group" aria-label="Interactive preview of the Rose Book: drag the page from right to left to turn it">
+          <div class="board"></div>
+          <div class="page l" id="pageL"></div>
+          <div class="page r"></div>
+          <div class="spine" id="spine"></div>
+          <div class="leaf" id="leafPrev"><div class="front"></div><div class="back"></div><div class="shade"></div></div>
+          <div class="leaf is-cover" id="leaf">
+            <div class="front"><img class="rose" id="rose" alt="" /><div class="cover"><span>Rose Book<small>كتاب الورود</small></span></div></div>
+            <div class="back"></div><div class="shade"></div>
+          </div>
+        </div>
       </div>
+      <canvas class="petals" id="petals" aria-hidden="true"></canvas>
     </div>
 
     <div class="controls">
-      <button class="btn" id="prev" type="button" aria-label="Previous page"><span class="arr">←</span></button>
       <div class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <button class="btn solid" id="next" type="button"><span id="nextLbl" data-i18n="ctl.open">Open the book</span> <span class="arr">→</span></button>
-      <button class="btn" id="cameraBtn" type="button" data-i18n="ctl.camera">Use my camera</button>
+      <button class="btn solid" id="next" type="button"><span id="nextLbl">Open the book</span> <span class="arr">→</span></button>
+      <button class="btn" id="camBtn" type="button"><span id="camLbl">Use my hand (camera)</span></button>
+      <label class="wrist" id="wristBox"><span id="wristLbl">Wrist</span> <input type="range" id="wrist" min="0" max="1" step="0.01" value="1" /></label>
     </div>
-    <p class="hint mono" data-i18n="ctl.hint">In the browser: click, swipe, or use the arrow keys. In TouchDesigner: your hand.</p>
+    <p class="hint mono" id="hint">Drag the page from right to left to turn it. Tilt the wrist slider, or your real wrist on camera, to open the rose.</p>
     <div class="camera-panel" id="cameraPanel" hidden>
-      <div class="camera-view"><video id="cameraVideo" playsinline muted></video><canvas id="handCanvas"></canvas></div>
-      <div class="camera-copy"><strong data-i18n="cam.title">Move and twist your hand</strong><span data-i18n="cam.help">Move from right to left to curl and turn the page. Tilt your wrist like a door knob to open and close the petals. The video is not uploaded.</span><div class="camera-status mono" id="cameraStatus" aria-live="polite"></div></div>
+      <div class="camera-view"><video id="video" playsinline muted></video><canvas id="guide"></canvas></div>
+      <div class="camera-copy"><strong data-i18n="cam.title">Move and twist your hand</strong><span data-i18n="cam.help">Start right of the centre line and move your hand left: the page curls and follows it. Once the bud is up, tilt your wrist like a door knob to open and close the petals. The video is not uploaded.</span><div class="camera-status mono keep" id="camState" aria-live="polite"></div></div>
     </div>
   </div>
 
@@ -286,8 +273,8 @@
       <p class="sub rv" data-i18n="how.sub">Everything runs live inside one TouchDesigner project, offline, on a normal laptop with a webcam.</p>
       <div class="flow rv">
         <div><span class="n mono keep">01 · camera</span><h3 data-i18n="how.1t">Your hand</h3><p data-i18n="how.1p">MediaPipe hand tracking reads your wrist and fingers from the webcam, many times a second.</p></div>
-        <div><span class="n mono keep">02 · gesture</span><h3 data-i18n="how.2t">The gesture</h3><p data-i18n="how.2p">Move your hand across the centre line to turn a page. Twist like a door knob, or flip your palm, if you prefer: it’s one setting.</p></div>
-        <div><span class="n mono keep">03 · book</span><h3 data-i18n="how.3t">The book</h3><p data-i18n="how.3p">The page turns in 3D, a rose grows from bud to bloom over 48 frames, and light particles drift around it.</p></div>
+        <div><span class="n mono keep">02 · gesture</span><h3 data-i18n="how.2t">The gesture</h3><p data-i18n="how.2p">Start with your hand right of the centre line and move it left: the page follows your hand. Once the bud is up, tilt your wrist like a door knob to open the rose, and back to close it.</p></div>
+        <div><span class="n mono keep">03 · book</span><h3 data-i18n="how.3t">The book</h3><p data-i18n="how.3p">The page turns in 3D with a soft spring, the stem grows to a bud, and the more the rose opens, the more petals fly out of it in the page’s colour.</p></div>
       </div>
       <figure class="shot rv">
         <img src="preview.jpg" alt="The Rose Book running in TouchDesigner: an open book with a pink rose and glowing particles" width="1280" height="720" loading="lazy" />
@@ -304,7 +291,7 @@
         <li><b data-i18n="get.1t">Download the project</b><p data-i18n="get.1p">Use the button below, then unzip it anywhere. The folder can live anywhere: it finds its own files.</p></li>
         <li><b data-i18n="get.2t">Get the MediaPipe component</b><p data-i18n="get.2p">It’s 187 MB, too big for GitHub. Right-click <code>get_mediapipe.ps1</code> → <b>Run with PowerShell</b>. It downloads it from the official release into <code>toxes/</code>.</p></li>
         <li><b data-i18n="get.3t">Open rose_book.toe</b><p data-i18n="get.3p">In TouchDesigner. Allow camera access when asked, and wait until the hand tracking shows your hand.</p></li>
-        <li><b data-i18n="get.4t">Turn a page</b><p data-i18n="get.4p">Move your hand across the centre of the camera view. The first move opens the cover; each one after turns a page.</p></li>
+        <li><b data-i18n="get.4t">Turn a page</b><p data-i18n="get.4p">Move your hand from right of the centre line to the left. The first move opens the cover; each one after turns a page. Then tilt your wrist to open the rose.</p></li>
       </ol>
       <div class="ctas rv">
         <a class="btn solid" href="https://github.com/marwathebest/rose-book-touchdesigner/archive/refs/heads/main.zip"><span data-i18n="get.zip">Download .zip</span> ↓</a>
@@ -350,21 +337,18 @@
     'hero.eyebrow': 'TouchDesigner · MediaPipe · Python',
     'hero.title': 'كتاب <em>الورود</em>',
     'hero.lede': 'كتاب تقلّب صفحاته بيدك. تحرّك يدك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.',
-    'ctl.open': 'افتح الكتاب', 'ctl.next': 'الصفحة التالية', 'ctl.close': 'سكّر الكتاب', 'ctl.camera': 'شغّل الكاميرا',
-    'ctl.hint': 'في المتصفح: اضغط أو اسحب أو استخدم الأسهم. وفي TouchDesigner: بيدك.',
-    'cam.title': 'حرّك يدك ولفّ معصمك', 'cam.help': 'ابدأ من اليمين واسحب يدك لليسار عشان تلفّ الصفحة وتقلبها. لفّ معصمك مثل مقبض الباب عشان تفتح البتلات وتسكرها. الفيديو ما ينرفع لأي مكان.',
     'how.title': 'كيف <em>يشتغل</em>',
     'how.sub': 'كل شي يشتغل مباشرة داخل مشروع TouchDesigner واحد، بدون إنترنت، على لابتوب عادي مع كاميرا.',
     'how.1t': 'يدك', 'how.1p': 'تتبّع اليد في MediaPipe يقرأ معصمك وأصابعك من الكاميرا عشرات المرات في الثانية.',
-    'how.2t': 'الحركة', 'how.2p': 'مرّر يدك عبر خط المنتصف عشان تقلب صفحة. وتقدر تختار لفّة المعصم أو قلب الكف بدلها، من إعداد واحد.',
-    'how.3t': 'الكتاب', 'how.3p': 'تنقلب الصفحة بشكل ثلاثي الأبعاد، وتنمو وردة من برعم لين تتفتّح خلال 48 إطار، وحولها جزيئات ضوء.',
+    'how.2t': 'الحركة', 'how.2p': 'ابدأ ويدك يمين خط المنتصف وحرّكها لليسار، والصفحة تمشي مع يدك. وبعد ما يطلع البرعم، ميّل معصمك زي مقبض الباب عشان تتفتح الوردة، ورجّعه عشان تتسكّر.',
+    'how.3t': 'الكتاب', 'how.3p': 'تنقلب الصفحة بشكل ثلاثي الأبعاد وبحركة نابضية ناعمة، والغصن ينمو لين البرعم، وكل ما تفتّحت الوردة أكثر طارت منها بتلات أكثر بلون الصفحة.',
     'how.cap': 'لقطة حيّة من TouchDesigner',
     'get.title': 'حمّل <em>المشروع</em>',
     'get.sub': 'مجاني. ملف ‎.toe‎ ينفتح والكتاب مبني فيه جاهز.',
     'get.1t': 'حمّل المشروع', 'get.1p': 'من الزر تحت، وفكّ الضغط في أي مكان. المجلد يلقى ملفاته بنفسه وين ما كان.',
     'get.2t': 'جيب مكوّن MediaPipe', 'get.2p': 'حجمه 187 ميقا، أكبر من حد GitHub. اضغط بالزر اليمين على <code>get_mediapipe.ps1</code> ← <b>Run with PowerShell</b>، ويحمّله من الإصدار الرسمي داخل مجلد <code>toxes/</code>.',
     'get.3t': 'افتح rose_book.toe', 'get.3p': 'في TouchDesigner. اسمح للكاميرا، وانتظر لين يظهر تتبّع يدك.',
-    'get.4t': 'اقلب صفحة', 'get.4p': 'مرّر يدك عبر منتصف صورة الكاميرا. أول حركة تفتح الغلاف، وكل حركة بعدها تقلب صفحة.',
+    'get.4t': 'اقلب صفحة', 'get.4p': 'حرّك يدك من يمين خط المنتصف لليسار. أول حركة تفتح الغلاف، وكل حركة بعدها تقلب صفحة. وبعدها ميّل معصمك عشان تتفتح الوردة.',
     'get.zip': 'تحميل ‎.zip‎', 'get.gh': 'شوفه على GitHub',
     'get.req': 'يحتاج TouchDesigner 2025.33230 أو أحدث (الرخصة المجانية تكفي) وكاميرا. على الماك: حمّل <code>release.zip</code> إصدار v0.6.0 من mediapipe-touchdesigner وانسخ <code>toxes/MediaPipe.tox</code> بيدك.',
     'get.test': 'ما عندك كاميرا؟ اختر <code>rose_book</code>، وافتح صفحة <b>Book</b> في باراميتراته، وشغّل <b>Test Without Camera</b> وحرّك <b>Test Hand Roll</b> من 1 إلى ‎−1. لا تضغط Space لأنه يوقف التايملاين.',
@@ -375,13 +359,13 @@
     'scr.2t': 'املأ الشاشة', 'scr.2p': 'اضغط على عنصر <code>perform</code> في المستوى الأعلى (<code>/</code>). وفي باراميتراته خلّ <b>Opening Size</b> على <b>Fill Location</b>، وطفّ <b>Borders</b>، ولو عندك شاشة ثانية خلّ <b>Justify and Offset to…</b> على <b>Specify Display</b> واختر رقمها من <b>Display</b>.',
     'scr.3t': 'خلّه يفتح على الشاشة مباشرة', 'scr.3p': 'افتح نافذة <b>Window Placement</b> (من قائمة <b>Edit</b> أو <b>Dialogs</b> حسب نسختك) وشغّل <b>Start in Perform Mode</b>، وبعدها احفظ بـ<kbd>Ctrl+S</kbd>. المرة الجاية ينفتح الملف على الشاشة فقط من أول ثانية.',
     'scr.4t': 'خلّها نظيفة', 'scr.4p': 'حط الكاميرا قدام الشاشة على مستوى اليد، وخلّ <b>Show Center Line</b> مطفي عشان الزوار يشوفون الكتاب بس.',
+    'cam.title': 'حرّك يدك ولفّ معصمك', 'cam.help': 'ابدأ يمين خط المنتصف واسحب يدك لليسار، والصفحة تنثني وتمشي مع يدك. وبعد ما يطلع البرعم، لفّ معصمك مثل مقبض الباب عشان تفتح البتلات وتسكّرها. الفيديو ما ينرفع لأي مكان.',
     'foot.by': 'من صنع <a href="https://github.com/marwathebest" target="_blank" rel="noopener noreferrer">مروة عبدالله سبعي</a>',
     'foot.mp': 'تتبّع اليد: <a href="https://github.com/torinmb/mediapipe-touchdesigner" target="_blank" rel="noopener noreferrer">mediapipe-touchdesigner</a> من Torin Blankensmith (MIT)'
   };
   var EN = { title: document.title };
   var nodes = document.querySelectorAll('[data-i18n]');
   nodes.forEach(function (el) { EN[el.getAttribute('data-i18n')] = el.innerHTML; });
-  EN['ctl.next'] = 'Next page'; EN['ctl.close'] = 'Close the book';
   var langBtn = document.getElementById('langBtn');
   function setLang(l) {
     var d = l === 'ar' ? AR : EN;
@@ -394,145 +378,297 @@
   }
   langBtn.addEventListener('click', function () { setLang(root.lang === 'ar' ? 'en' : 'ar'); });
 
-  /* ── book preview ── */
+  /* ── book preview: a port of book_logic + fx_particles from book_body.py ── */
   var CDN = 'https://cdn.jsdelivr.net/gh/marwathebest/rose-book-touchdesigner@main/';
-  var PAGES = [
-    { dir: 'page1_red', en: 'A red rose', ar: 'وردة حمرا' },
-    { dir: 'page2_pink', en: 'A pink rose', ar: 'وردة وردية' },
-    { dir: 'page3_magenta', en: 'Two magenta roses', ar: 'وردتين فوشيا' },
-    { dir: 'page4_white', en: 'Three white roses', ar: 'ثلاث ورود بيضاء' }
-  ];
-  var FRAMES = []; for (var f = 0; f <= 46; f += 2) FRAMES.push(f); FRAMES.push(47);
-  var cache = {};
-  function src(p, f) { return CDN + PAGES[p].dir + '/frame_' + ('000' + f).slice(-4) + '.png'; }
+  var PAGES = ['page1_red', 'page2_pink', 'page3_magenta', 'page4_white'];
+  var GLOW = [[1.0, 0.28, 0.32], [1.0, 0.55, 0.75], [0.85, 0.35, 1.0], [0.75, 0.8, 1.0]];
+  var SWIPE_M = 0.1, TWIST_ANGLE = 30, GROW_TIME = 2.5, BUD = 17 / 47;
+  var UI = {
+    en: { open: 'Open the book', next: 'Next page', close: 'Close the book', cam: 'Use my hand (camera)', camOff: 'Stop camera',
+          wrist: 'Wrist', hint: 'Drag the page from right to left to turn it. Tilt the wrist slider, or your real wrist on camera, to open the rose.',
+          loading: 'Loading hand tracking…', show: 'Show your hand. Start right of the centre line, move left to turn; tilt your wrist to open the rose.',
+          seen: 'Hand found ✓  Runs only in your browser; nothing is uploaded.', denied: 'Camera not available. Drag with the mouse or your finger instead.' },
+    ar: { open: 'افتح الكتاب', next: 'الصفحة التالية', close: 'سكّر الكتاب', cam: 'استخدم يدي (الكاميرا)', camOff: 'وقّف الكاميرا',
+          wrist: 'المعصم', hint: 'اسحب الصفحة من اليمين لليسار عشان تقلبها. وحرّك شريط المعصم، أو معصمك الحقيقي بالكاميرا، عشان تتفتح الوردة.',
+          loading: 'جاري تحميل تتبّع اليد…', show: 'ورّ الكاميرا يدك. ابدأ يمين خط المنتصف وحرّكها لليسار عشان تقلب، وميّل معصمك عشان تتفتح الوردة.',
+          seen: 'شفت يدك ✓  كل شي يشتغل داخل متصفحك، وما ينرفع شي.', denied: 'الكاميرا مو متاحة. اسحب بالماوس أو بإصبعك بدلها.' }
+  };
+  function t(k) { return UI[root.lang === 'ar' ? 'ar' : 'en'][k]; }
+
+  var frames = {};
+  function frameSrc(p, f) { return CDN + PAGES[p] + '/frame_' + ('000' + f).slice(-4) + '.png'; }
   function preload(p) {
-    if (p < 0 || p > 3 || cache[p]) return;
-    cache[p] = FRAMES.map(function (f) { var i = new Image(); i.decoding = 'async'; i.src = src(p, f); return i; });
+    if (p < 0 || p > 3 || frames[p]) return;
+    frames[p] = [];
+    for (var f = 0; f < 48; f++) { var im = new Image(); im.decoding = 'async'; im.src = frameSrc(p, f); frames[p].push(im); }
+  }
+  function clamp(v, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return Math.max(a, Math.min(b, v)); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var book = $('book'), scene = $('scene'), leaf = $('leaf'), leafPrev = $('leafPrev'), roseImg = $('rose');
+  var pageL = $('pageL'), spine = $('spine'), nextBtn = $('next'), nextLbl = $('nextLbl');
+  var camBtn = $('camBtn'), camLbl = $('camLbl'), wristBox = $('wristBox'), wristLbl = $('wristLbl'), wrist = $('wrist');
+  var camState = $('camState'), hint = $('hint'), dots = document.querySelectorAll('.dots i');
+  var leafShade = leaf.querySelector('.shade'), prevShade = leafPrev.querySelector('.shade');
+
+  // book state, same names as book_logic
+  var S = { page: 0, armed: 0, turn: 0, turnV: 0, turnPrev: 1, prevV: 0, growStart: 0, bloom: 0,
+            smooth: 0.5, seenAt: -10, auto: false, force: false, rose: 0, spread: 0, burst: 0, parts: [], twist: 0 };
+  var pointer = { down: false, hx: 0.5 };
+  var cam = { on: false, ok: false, hx: 0.5, hy: 0.5, twist: 0 };
+
+  function readHand() {
+    if (cam.on) return cam.ok ? { hx: cam.hx, tw: cam.twist, ok: true, twOk: true } : { ok: false, twOk: false };
+    return { hx: pointer.hx, tw: +wrist.value, ok: pointer.down, twOk: true };
   }
 
-  var book = document.getElementById('book'), rose = document.getElementById('rose'), leaf = document.getElementById('leaf');
-  var next = document.getElementById('next'), prev = document.getElementById('prev'), nextLbl = document.getElementById('nextLbl');
-  var dots = document.querySelectorAll('.dots i'), pgNum = document.getElementById('pgNum'), pgName = document.getElementById('pgName');
-  var state = 0, busy = false, grow = null, handControl = false, lastPetalAt = 0, lastHandBloom = 0;   // 0 = closed, 1..4 = page
+  function step(now) {
+    var h = readHand(), roll = h.hx, ok = h.ok;
+    // a short tracking drop keeps the last value instead of snapping the page back
+    var gone = now - S.seenAt >= 0.6;
+    if (ok) S.seenAt = now; else if (!gone) { roll = S.smooth; ok = true; }
+    var sm = S.smooth;
+    if (ok && gone) sm = roll;
+    sm += (roll - sm) * 0.3;
+    S.smooth = sm;
 
-  function render() {
-    var ar = root.lang === 'ar';
-    book.classList.toggle('closed', state === 0);
-    book.classList.toggle('open', state > 0);
-    dots.forEach(function (d, i) { d.classList.toggle('on', i === state - 1); });
-    prev.disabled = state === 0;
-    var key = state === 0 ? 'ctl.open' : state === 4 ? 'ctl.close' : 'ctl.next';
-    nextLbl.textContent = (ar ? AR : EN)[key].replace(/<[^>]+>/g, '');
-    if (state > 0) {
-      pgNum.textContent = 'page ' + state + ' / 4';
-      pgName.textContent = ar ? PAGES[state - 1].ar : PAGES[state - 1].en;
+    // swipe: arm on the right of the centre line, then the page follows your hand to the left
+    var target = 0;
+    if (ok) {
+      if (S.armed === 0) { if (sm > 0.5 + SWIPE_M) S.armed = 1; }
+      else target = clamp((0.5 + SWIPE_M - sm) / (2 * SWIPE_M));
     }
-  }
-  function ready(p) {
-    // wait until this page's frames are downloaded (max 6 s), so the growth isn't skipped
-    return Promise.race([
-      Promise.all(cache[p].map(function (i) {
-        return i.complete ? 0 : new Promise(function (r) { i.onload = i.onerror = r; });
-      })),
-      new Promise(function (r) { setTimeout(r, 6000); })
-    ]);
-  }
-  var growId = 0;
-  function growRose(p) {
-    clearTimeout(grow);
-    var id = ++growId;
-    preload(p); preload(p + 1);
-    if (handControl) { rose.src = src(p, Math.round(lastHandBloom * 47)); return; }
-    if (reduce) { rose.src = src(p, 47); return; }
-    rose.src = src(p, 0);
-    ready(p).then(function () {
-      if (id !== growId) return;
-      var start = null, dur = 2500;
-      (function step(t) {
-        if (id !== growId) return;
-        if (start === null) start = t;
-        var k = Math.min(1, (t - start) / dur);
-        var e = 1 - Math.pow(1 - k, 2);
-        var img = cache[p][Math.round(e * (FRAMES.length - 1))];
-        if (img.complete && img.naturalWidth) rose.src = img.src;
-        if (k < 1) grow = setTimeout(function () { step(performance.now()); }, 40);
-        else rose.src = src(p, 47);
-      })(performance.now());
-    });
-  }
-  function go(dir) {
-    if (busy) return;
-    var to = state + dir;
-    if (to < 0) return;
-    if (to > 4) to = 0;                       // after page 4 the book closes
-    busy = true;
-    var pageTurn = state > 0 && to > 0;
-    if (pageTurn && !reduce) {
-      leaf.classList.remove('turn', 'back-turn'); void leaf.offsetWidth;
-      leaf.classList.add('turn'); if (dir < 0) leaf.classList.add('back-turn');
+    if (S.force) { S.force = false; S.auto = true; }
+    if (S.auto) target = 1;
+
+    // springy turn that overshoots a little, like the TouchDesigner version
+    S.turnV += (target - S.turn) * 0.09;
+    S.turnV *= 0.74;
+    S.turn = clamp(S.turn + S.turnV);
+    if (target >= 0.9 && S.turn >= 0.82) {
+      S.page = S.page < 4 ? S.page + 1 : 0;          // after page 4 the book closes
+      S.armed = 0; S.auto = false;
+      S.turnPrev = S.turn; S.prevV = S.turnV;
+      S.turn = 0; S.turnV = 0;
+      S.growStart = now; S.bloom = 0;
+      S.burst = S.page >= 1 ? 40 : 20;
+      if (S.page >= 1) { preload(S.page - 1); preload(S.page); }
+      syncUI();
     }
-    growId++; rose.removeAttribute('src');
-    setTimeout(function () {
-      state = to; render();
-      if (state > 0) growRose(state - 1);
-      setTimeout(function () { leaf.classList.remove('turn', 'back-turn'); busy = false; }, reduce ? 0 : 450);
-    }, reduce ? 0 : (pageTurn ? 450 : 500));
+    if (S.turnPrev < 1) {                             // the old page keeps falling to the left
+      S.prevV += (1 - S.turnPrev) * 0.12;
+      S.prevV *= 0.7;
+      S.turnPrev = Math.min(1, S.turnPrev + Math.max(S.prevV, 0.004));
+    }
+
+    // the stem grows to a bud by itself, then the wrist opens and closes the rose
+    var grow = S.page >= 1 ? clamp((now - S.growStart) / GROW_TIME) : 0;
+    grow = 1 - (1 - grow) * (1 - grow);
+    if (h.twOk) S.bloom += (h.tw - S.bloom) * 0.12;
+    var rose = grow * BUD + (1 - BUD) * S.bloom * grow;
+    S.spread = S.page >= 1 ? S.bloom : 0;
+    S.rose = rose * clamp(1 - S.turn * 1.6);           // the rose sinks back into the paper as it turns
   }
-  window.roseBookGo = go;
-  window.roseBookHand = function (turn, bloom) {
-    handControl = true;
-    turn = Math.max(0, Math.min(1, turn || 0));
-    bloom = Math.max(0, Math.min(1, bloom || 0));
-    if (state > 0) {
-      preload(state - 1);
-      rose.src = src(state - 1, Math.round(bloom * 47));
-      var now = performance.now();
-      if (bloom > lastHandBloom + .025 && bloom > .35 && now - lastPetalAt > 110) {
-        lastPetalAt = now;
-        var fx = document.getElementById('petalFx');
-        var count = 1 + Math.floor(bloom * 2);
-        for (var n = 0; n < count; n++) {
-          var p = document.createElement('i'); p.className = 'petal';
-          p.style.setProperty('--dx', ((Math.random() - .5) * (90 + bloom * 140)) + 'px');
-          p.style.setProperty('--dy', (-35 - Math.random() * (80 + bloom * 100)) + 'px');
-          p.style.setProperty('--rot', ((Math.random() - .5) * 540) + 'deg');
-          p.style.setProperty('--life', (1.2 + Math.random() * 1.1) + 's');
-          fx.appendChild(p); setTimeout(function (el) { el.remove(); }, 2400, p);
-        }
+
+  // petals and sparkles (fx_particles), in book units; the rose head sits at (0.55, 0.25)
+  var DT = 1 / 60, R = Math.random;
+  function rnd(a, b) { return a + R() * (b - a); }
+  function petalsStep() {
+    var parts = S.parts;
+    if (S.burst) {
+      for (var i = 0; i < S.burst; i++) parts.push([rnd(.15, .95), rnd(-.55, .45), rnd(0, .15), rnd(-.25, .2), rnd(.25, .75), rnd(.05, .35), 0, rnd(1.6, 3.2), rnd(.015, .035), rnd(0, 6.28)]);
+      S.burst = 0;
+    }
+    var sp = S.spread;
+    if (R() < sp * 0.9) {                              // the more the rose opens, the more petals fly out
+      for (var j = 0; j < 1 + Math.floor(sp * 2); j++) {
+        var a = rnd(0, 6.28), v = 0.25 + 0.55 * sp;
+        parts.push([0.55 + rnd(-.08, .08), 0.25 + rnd(-.08, .08), 0.06, Math.cos(a) * v, Math.sin(a) * v + 0.1, rnd(.05, .3), 0, rnd(1.4, 2.6), rnd(.015, .035), rnd(0, 6.28)]);
       }
     }
-    lastHandBloom = bloom;
-    if (turn > .01) {
-      var bend = Math.sin(Math.PI * turn);
-      leaf.classList.add('live-turn');
-      leaf.style.transform = 'rotateY(' + (-180 * turn) + 'deg) rotateZ(' + (-5 * bend) + 'deg) skewY(' + (-4 * bend) + 'deg)';
-      leaf.style.borderRadius = '0 ' + (bend * 28) + 'px ' + (bend * 28) + 'px 0';
-      rose.style.opacity = String(Math.max(0, 1 - turn * 1.6));
-    } else {
-      leaf.classList.remove('live-turn'); leaf.style.transform = ''; leaf.style.borderRadius = ''; rose.style.opacity = '';
+    if (R() < 0.12 + 0.25 * S.rose) parts.push([rnd(-1.8, 1.8), rnd(-1.1, .9), rnd(-.4, .7), 0, rnd(.02, .07), 0, 0, rnd(4, 7), rnd(.008, .02), rnd(0, 6.28)]);
+    var alive = [];
+    for (var k = 0; k < parts.length; k++) {
+      var q = parts[k];
+      q[6] += DT;
+      if (q[6] >= q[7]) continue;
+      q[3] += Math.sin(q[6] * 2.3 + q[9]) * 0.004;
+      q[3] += (q[0] - 0.55) * sp * 0.8 * DT;
+      q[4] += (q[1] - 0.25) * sp * 0.8 * DT;
+      q[0] += q[3] * DT; q[1] += q[4] * DT; q[2] += q[5] * DT;
+      q[3] *= 0.985; q[4] *= 0.992;
+      alive.push(q);
     }
-  };
-  window.roseBookHandEnd = function () {
-    if (!handControl) return;
-    handControl = false; lastHandBloom = 0;
-    leaf.classList.remove('live-turn'); leaf.style.transform = ''; leaf.style.borderRadius = ''; rose.style.opacity = '';
-    if (state > 0) growRose(state - 1);
-  };
-  next.addEventListener('click', function () { go(1); });
-  prev.addEventListener('click', function () { go(-1); });
-  book.addEventListener('click', function () { go(1); });
-  document.addEventListener('keydown', function (e) {
-    // the book itself always opens like a left-to-right book
-    if (e.key === 'ArrowRight') go(1);
-    if (e.key === 'ArrowLeft') go(-1);
-  });
-  var sx = null;
-  book.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
-  book.addEventListener('touchend', function (e) {
-    if (sx === null) return; var dx = e.changedTouches[0].clientX - sx; sx = null;
-    if (Math.abs(dx) > 40) { e.preventDefault(); go(dx < 0 ? 1 : -1); }
-  });
+    S.parts = alive.slice(-400);
+  }
+
+  var pc = $('petals'), px = pc.getContext('2d');
+  function drawPetals(now) {
+    var w = pc.clientWidth, hgt = pc.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (pc.width !== Math.round(w * dpr)) { pc.width = Math.round(w * dpr); pc.height = Math.round(hgt * dpr); }
+    px.setTransform(dpr, 0, 0, dpr, 0, 0);
+    px.clearRect(0, 0, w, hgt);
+    px.globalCompositeOperation = 'lighter';
+    var k = book.clientWidth / 2.12, cx0 = w / 2, cy0 = hgt / 2;
+    var g = S.page >= 1 ? GLOW[(S.page - 1) % 4] : [1, 0.6, 0.4];
+    var rgb = Math.round(g[0] * 255) + ',' + Math.round(g[1] * 255) + ',' + Math.round(g[2] * 255);
+    var glow = 0.55 * (0.8 + 0.4 * S.rose);
+    for (var i = 0; i < S.parts.length; i++) {
+      var q = S.parts[i], age = q[6], life = q[7];
+      var fade = Math.min(1, age / 0.25) * Math.min(1, (life - age) / 0.9);
+      var s = q[8] * fade * (1 + 0.35 * Math.sin(age * 7 + q[9])) * (1 + 0.8 * S.spread);
+      if (s <= 0.0005) continue;
+      var f = 4.6 / (4.6 - q[2]);                      // camera at z = 4.6
+      // in TouchDesigner each petal is a quad of half-size s with a soft dot (exp(-r²·4)) on it, plus a light blur
+      var x = cx0 + q[0] * k * f, y = cy0 - q[1] * k * f, r = s * k * f;
+      var gr = px.createRadialGradient(x, y, 0, x, y, r * 2.2);
+      gr.addColorStop(0, 'rgba(255,240,245,0.85)');
+      gr.addColorStop(0.16, 'rgba(' + rgb + ',0.6)');
+      gr.addColorStop(0.42, 'rgba(' + rgb + ',' + (0.14 * glow).toFixed(3) + ')');
+      gr.addColorStop(1, 'rgba(' + rgb + ',0)');
+      px.fillStyle = gr; px.beginPath(); px.arc(x, y, r * 2.2, 0, 6.283); px.fill();
+    }
+  }
+
+  var shownFrame = '';
+  function draw(now) {
+    var ry = -180 * S.turn;
+    var bend = Math.sin(Math.PI * S.turn);
+    leaf.style.transform = 'rotateY(' + ry + 'deg) rotateZ(' + (-5 * bend).toFixed(2) + 'deg) skewY(' + (-4 * bend).toFixed(2) + 'deg) translateZ(1px)';
+    leaf.style.borderRadius = '0 ' + (bend * 28).toFixed(1) + 'px ' + (bend * 28).toFixed(1) + 'px 0';
+    leaf.style.filter = bend > 0.01 ? 'drop-shadow(12px 10px 14px rgba(45,8,18,' + (0.28 * bend).toFixed(3) + '))' : '';
+    leafShade.style.opacity = (Math.sin(Math.PI * S.turn) * 0.7).toFixed(3);
+    var prevOn = S.turnPrev < 0.999;
+    leafPrev.style.display = prevOn ? 'block' : 'none';
+    if (prevOn) { var pb = Math.sin(Math.PI * S.turnPrev); leafPrev.style.transform = 'rotateY(' + (-180 * S.turnPrev) + 'deg) rotateZ(' + (-5 * pb).toFixed(2) + 'deg) skewY(' + (-4 * pb).toFixed(2) + 'deg)'; prevShade.style.opacity = (Math.sin(Math.PI * S.turnPrev) * 0.7).toFixed(3); }
+    pageL.style.opacity = S.page >= 1 || prevOn ? 1 : 0;
+    spine.style.opacity = S.page >= 1 ? 1 : 0;
+    book.classList.toggle('closed', S.page === 0 && !prevOn && S.turn < 0.02);
+    leaf.classList.toggle('is-cover', S.page === 0);
+    if (S.page >= 1) {
+      var p = S.page - 1, fi = Math.round(S.rose * 47), want = frameSrc(p, fi);
+      var im = frames[p] && frames[p][fi];
+      if (want !== shownFrame && im && im.complete && im.naturalWidth) { roseImg.src = want; shownFrame = want; }
+      var gc = GLOW[p], a = S.rose * (0.3 + 0.07 * Math.sin(now * 2.2)) * 1.6;
+      roseImg.style.filter = 'drop-shadow(0 0 18px rgba(' + Math.round(gc[0] * 255) + ',' + Math.round(gc[1] * 255) + ',' + Math.round(gc[2] * 255) + ',' + a.toFixed(3) + '))';
+    } else if (shownFrame) { roseImg.removeAttribute('src'); shownFrame = ''; }
+    // the camera sways gently and leans with your hand
+    if (!reduce) {
+      var cry = 2.0 * Math.sin(now * 0.31) + 2.5 * (S.smooth - 0.5);
+      var crx = 6 + 0.8 * Math.sin(now * 0.23);
+      scene.style.transform = 'rotateX(' + crx.toFixed(2) + 'deg) rotateY(' + (-cry).toFixed(2) + 'deg)';
+    }
+    drawPetals(now);
+    drawGuide();
+  }
+
+  function syncUI() {
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === S.page - 1); });
+    nextLbl.textContent = t(S.page === 0 ? 'open' : S.page === 4 ? 'close' : 'next');
+    camLbl.textContent = t(cam.on ? 'camOff' : 'cam');
+    camBtn.classList.toggle('on', cam.on);
+    wristLbl.textContent = t('wrist');
+    wristBox.classList.toggle('hidden', cam.on);
+    hint.textContent = t('hint');
+    if (camState.dataset.k) camState.textContent = t(camState.dataset.k);
+  }
+  function render() { syncUI(); }   // the language switch calls render()
+
+  // fixed 60 Hz simulation, like TouchDesigner's frame loop
+  var acc = 0, last = performance.now();
+  function frame(tms) {
+    var now = tms / 1000;
+    acc = Math.min(acc + (tms - last) / 1000, 0.25); last = tms;
+    while (acc >= DT) { step(now); petalsStep(); acc -= DT; }
+    draw(now);
+    requestAnimationFrame(frame);
+  }
+
+  // pointer = your hand when there is no camera
+  function setHx(e) { var r = book.getBoundingClientRect(); pointer.hx = clamp((e.clientX - r.left) / r.width); }
+  book.addEventListener('pointerdown', function (e) { pointer.down = true; setHx(e); book.classList.add('dragging'); try { book.setPointerCapture(e.pointerId); } catch (err) {} });
+  book.addEventListener('pointermove', function (e) { if (pointer.down) setHx(e); });
+  function up() { pointer.down = false; book.classList.remove('dragging'); }
+  book.addEventListener('pointerup', up); book.addEventListener('pointercancel', up);
+  nextBtn.addEventListener('click', function () { S.force = true; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) S.force = true; });
+
+  // real hand tracking in the browser (MediaPipe Tasks), same points the project reads
+  var MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/';
+  var MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+  var video = $('video'), camBox = $('cameraPanel'), gc = $('guide'), gx = gc.getContext('2d'), landmarker = null, stream = null, lastVT = -1;
+  function setState(k) { camState.textContent = k ? t(k) : ''; camState.dataset.k = k || ''; }
+  async function startCam() {
+    camBox.hidden = false; setState('loading'); camBtn.disabled = true;
+    try {
+      if (!landmarker) {
+        var vision = await import(MP + 'vision_bundle.mjs');
+        var files = await vision.FilesetResolver.forVisionTasks(MP + 'wasm');
+        var opts = function (d) { return { baseOptions: { modelAssetPath: MODEL, delegate: d }, runningMode: 'VIDEO', numHands: 1,
+          minHandDetectionConfidence: 0.2, minHandPresenceConfidence: 0.2, minTrackingConfidence: 0.2 }; };
+        try { landmarker = await vision.HandLandmarker.createFromOptions(files, opts('GPU')); }
+        catch (e) { landmarker = await vision.HandLandmarker.createFromOptions(files, opts('CPU')); }
+      }
+      stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' }, audio: false });
+      video.srcObject = stream; await video.play();
+      cam.on = true; cam.ok = false; camBox.hidden = false; setState('show');
+      detect();
+    } catch (e) {
+      stopCam(); camBox.hidden = false; setState('denied');
+    }
+    camBtn.disabled = false; syncUI();
+  }
+  function stopCam() {
+    cam.on = false; cam.ok = false; camBox.hidden = true;
+    if (stream) stream.getTracks().forEach(function (tr) { tr.stop(); });
+    stream = null; setState(''); syncUI();
+  }
+  function detect() {
+    if (!cam.on) return;
+    if (video.readyState >= 2 && video.currentTime !== lastVT) {
+      lastVT = video.currentTime;
+      var res = landmarker.detectForVideo(video, performance.now());
+      var lm = res.landmarks && res.landmarks[0];
+      cam.points = lm || null;
+      if (lm) {
+        var wx = lm[0].x, wy = lm[0].y, mx = lm[9].x, my = lm[9].y;       // wrist, middle finger MCP
+        cam.hx = 1 - (wx + mx) / 2;                                       // from your point of view
+        cam.hy = (wy + my) / 2;
+        var aspect = (video.videoWidth || 4) / (video.videoHeight || 3);
+        var ang = Math.atan2((mx - wx) * aspect, wy - my) * 180 / Math.PI;  // door-knob tilt
+        cam.twist = clamp((Math.abs(ang) - 5) / Math.max(5, TWIST_ANGLE - 5));
+        if (!cam.ok && camState.dataset.k === 'show') setState('seen');
+        cam.ok = true;
+      } else cam.ok = false;
+    }
+    requestAnimationFrame(detect);
+  }
+  // the canvas is mirrored with CSS like the video, so everything is drawn in camera coordinates
+  var LINKS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+  function drawGuide() {
+    if (!cam.on) return;
+    var w = gc.clientWidth, h = gc.clientHeight;
+    if (gc.width !== w) { gc.width = w; gc.height = h; }
+    gx.clearRect(0, 0, w, h);
+    gx.fillStyle = 'rgba(255,255,255,.07)';
+    gx.fillRect((0.5 - SWIPE_M) * w, 0, 2 * SWIPE_M * w, h);
+    gx.strokeStyle = 'rgba(255,220,230,' + (0.3 + 0.6 * S.turn) + ')'; gx.lineWidth = 1; gx.setLineDash([5, 5]);
+    gx.beginPath(); gx.moveTo(w / 2, 0); gx.lineTo(w / 2, h); gx.stroke(); gx.setLineDash([]);
+    var pts = cam.ok && cam.points;
+    if (!pts) return;
+    gx.strokeStyle = 'rgba(255,255,255,.7)'; gx.lineWidth = 2;
+    LINKS.forEach(function (l) { gx.beginPath(); gx.moveTo(pts[l[0]].x * w, pts[l[0]].y * h); gx.lineTo(pts[l[1]].x * w, pts[l[1]].y * h); gx.stroke(); });
+    gx.fillStyle = '#ec6f9b';
+    pts.forEach(function (q) { gx.beginPath(); gx.arc(q.x * w, q.y * h, 3, 0, 6.283); gx.fill(); });
+    gx.fillStyle = S.armed ? 'rgba(140,255,180,.95)' : 'rgba(255,170,120,.95)';   // green = ready to turn
+    gx.beginPath(); gx.arc((1 - cam.hx) * w, cam.hy * h, 7, 0, 6.283); gx.fill();
+  }
+  camBtn.addEventListener('click', function () { cam.on ? stopCam() : startCam(); });
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) camBtn.hidden = true;
+
   preload(0);
+  syncUI();
+  requestAnimationFrame(frame);
 
   /* ── glowing particles, like the TouchDesigner version ── */
   var cv = document.getElementById('sparks'), cx = cv.getContext('2d'), P = [], W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -561,89 +697,6 @@
 
   if (root.lang === 'ar') setLang('ar'); else render();
 })();
-</script>
-<script type="module">
-  import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
-
-  const button = document.getElementById('cameraBtn');
-  const panel = document.getElementById('cameraPanel');
-  const video = document.getElementById('cameraVideo');
-  const canvas = document.getElementById('handCanvas');
-  const ctx = canvas.getContext('2d');
-  const status = document.getElementById('cameraStatus');
-  let landmarker, stream, running = false, lastVideoTime = -1, pageArmed = false, cooldownUntil = 0;
-
-  const words = () => document.documentElement.lang === 'ar' ? {
-    loading: 'جاري تجهيز تتبّع اليد…', ready: 'الكاميرا جاهزة — لوّح بيدك', noHand: 'قرّب يدك من الكاميرا', stop: 'أوقف الكاميرا', start: 'شغّل الكاميرا', denied: 'تعذّر تشغيل الكاميرا. تأكد من السماح لها في المتصفح.'
-  } : {
-    loading: 'Preparing hand tracking…', ready: 'Camera ready — wave your hand', noHand: 'Bring your hand into view', stop: 'Stop camera', start: 'Use my camera', denied: 'Could not start the camera. Check the browser camera permission.'
-  };
-
-  async function prepare() {
-    if (landmarker) return;
-    const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
-    landmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
-      runningMode: 'VIDEO', numHands: 1, minHandDetectionConfidence: .55, minTrackingConfidence: .55
-    });
-  }
-
-  function drawHand(points) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!points) return;
-    ctx.fillStyle = '#ec6f9b'; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2;
-    for (const p of points) { ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, Math.PI * 2); ctx.fill(); }
-    const links = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-    for (const [a,b] of links) { ctx.beginPath(); ctx.moveTo(points[a].x*canvas.width,points[a].y*canvas.height); ctx.lineTo(points[b].x*canvas.width,points[b].y*canvas.height); ctx.stroke(); }
-  }
-
-  function handControls(points, now) {
-    const wrist = points[0], middle = points[9];
-    const handX = 1 - (wrist.x + middle.x) * .5;
-    const angle = Math.abs(Math.atan2((middle.x - wrist.x) * 1.78, middle.y - wrist.y) * 180 / Math.PI);
-    const bloom = Math.max(0, Math.min(1, (angle - 5) / 35));
-    if (!pageArmed && handX > .64 && now >= cooldownUntil) pageArmed = true;
-    const turn = pageArmed ? Math.max(0, Math.min(1, (.64 - handX) / .28)) : 0;
-    window.roseBookHand(turn, bloom);
-    if (pageArmed && turn >= .82 && now >= cooldownUntil) {
-      window.roseBookGo(1); pageArmed = false; cooldownUntil = now + 1300;
-    }
-    if (!pageArmed && handX > .7) window.roseBookHand(0, bloom);
-  }
-
-  function loop() {
-    if (!running) return;
-    if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
-      lastVideoTime = video.currentTime;
-      const result = landmarker.detectForVideo(video, performance.now());
-      const hand = result.landmarks && result.landmarks[0];
-      drawHand(hand);
-      if (hand) { status.textContent = words().ready; handControls(hand, performance.now()); }
-      else { status.textContent = words().noHand; pageArmed = false; window.roseBookHandEnd(); }
-    }
-    requestAnimationFrame(loop);
-  }
-
-  async function start() {
-    panel.hidden = false; status.textContent = words().loading; button.disabled = true;
-    try {
-      await prepare();
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-      video.srcObject = stream; await video.play();
-      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
-      running = true; button.disabled = false; button.textContent = words().stop; status.textContent = words().ready; loop();
-    } catch (error) {
-      console.error(error); button.disabled = false; button.textContent = words().start; status.textContent = words().denied;
-    }
-  }
-
-  function stop() {
-    running = false; if (stream) stream.getTracks().forEach(track => track.stop());
-    stream = null; video.srcObject = null; ctx.clearRect(0,0,canvas.width,canvas.height);
-    panel.hidden = true; button.textContent = words().start; pageArmed = false; window.roseBookHandEnd();
-  }
-
-  button.addEventListener('click', () => running ? stop() : start());
 </script>
 </body>
 </html>

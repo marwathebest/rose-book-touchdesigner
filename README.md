@@ -4,7 +4,7 @@
 
 **كتاب تفاعلي في TouchDesigner تقلّب صفحاته بيدك. تحرّك يدك قدام الكاميرا فتنقلب صفحة، وتطلع منها وردة تنمو وتتفتّح.**
 
-🌐 **Website & web preview:** https://marwathebest.github.io/rose-book-touchdesigner/
+🌐 **Website & web preview:** https://marwathebest.github.io/rose-book-touchdesigner/ (try it with your mouse, or your real hand on camera)
 
 ![Rose Book preview](docs/preview.jpg)
 
@@ -12,7 +12,8 @@
 
 - أول حركة تفتح الغلاف، وكل حركة بعدها تقلب صفحة.
 - كل صفحة فيها وردة مختلفة: حمرا، وردية، وردتين فوشيا، وثلاث ورود بيضاء.
-- الغصن ينمو والأوراق تطلع، وبعدها الوردة تتفتّح من برعم لين تكتمل، وحولها جزيئات ضوء.
+- الغصن ينمو والأوراق تطلع لين البرعم، وبعدها **ميلان معصمك** (زي مقبض الباب) يفتح الوردة ويسكّرها.
+- كل ما تفتّحت الوردة أكثر، **طارت منها بتلات** أكثر بلون الصفحة، ومع كل قلبة تطلع دفعة بتلات.
 - الحركة بالعكس ترجّع صفحة. وبعد الصفحة الرابعة يتقفّل الكتاب.
 
 **Gestures** (choose in `rose_book` → **Book** → *Hand Gesture*):
