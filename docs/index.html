@@ -409,21 +409,36 @@
       pgName.textContent = ar ? PAGES[state - 1].ar : PAGES[state - 1].en;
     }
   }
+  function ready(p) {
+    // wait until this page's frames are downloaded (max 6 s), so the growth isn't skipped
+    return Promise.race([
+      Promise.all(cache[p].map(function (i) {
+        return i.complete ? 0 : new Promise(function (r) { i.onload = i.onerror = r; });
+      })),
+      new Promise(function (r) { setTimeout(r, 6000); })
+    ]);
+  }
+  var growId = 0;
   function growRose(p) {
-    cancelAnimationFrame(grow);
+    clearTimeout(grow);
+    var id = ++growId;
     preload(p); preload(p + 1);
     if (reduce) { rose.src = src(p, 47); return; }
     rose.src = src(p, 0);
-    var start = null, dur = 2500;
-    (function step(t) {
-      if (start === null) start = t;
-      var k = Math.min(1, (t - start) / dur);
-      var e = 1 - Math.pow(1 - k, 2);
-      var idx = Math.round(e * (FRAMES.length - 1));
-      var img = cache[p][idx];
-      if (img.complete && img.naturalWidth) rose.src = img.src;
-      if (k < 1) grow = requestAnimationFrame(step);
-    })(performance.now());
+    ready(p).then(function () {
+      if (id !== growId) return;
+      var start = null, dur = 2500;
+      (function step(t) {
+        if (id !== growId) return;
+        if (start === null) start = t;
+        var k = Math.min(1, (t - start) / dur);
+        var e = 1 - Math.pow(1 - k, 2);
+        var img = cache[p][Math.round(e * (FRAMES.length - 1))];
+        if (img.complete && img.naturalWidth) rose.src = img.src;
+        if (k < 1) grow = setTimeout(function () { step(performance.now()); }, 40);
+        else rose.src = src(p, 47);
+      })(performance.now());
+    });
   }
   function go(dir) {
     if (busy) return;
@@ -436,7 +451,7 @@
       leaf.classList.remove('turn', 'back-turn'); void leaf.offsetWidth;
       leaf.classList.add('turn'); if (dir < 0) leaf.classList.add('back-turn');
     }
-    rose.removeAttribute('src');
+    growId++; rose.removeAttribute('src');
     setTimeout(function () {
       state = to; render();
       if (state > 0) growRose(state - 1);
